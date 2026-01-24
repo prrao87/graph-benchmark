@@ -1,11 +1,11 @@
 import argparse
 import asyncio
 import os
+import time
 from pathlib import Path
 from typing import Any, Callable, Iterator
 
 import polars as pl
-from codetiming import Timer
 from dotenv import load_dotenv
 from neo4j import AsyncGraphDatabase, AsyncManagedTransaction, AsyncSession
 
@@ -211,12 +211,16 @@ async def main() -> None:
         async with driver.session(database="neo4j") as session:
             # Create indexes and constraints
             await create_indexes_and_constraints(session)
-            with Timer(name="nodes", text="Nodes loaded in {:.4f}s"):
-                # Write nodes
-                await write_nodes(session)
-            with Timer(name="edges", text="Edges loaded in {:.4f}s"):
-                # Write edges after nodes have been created
-                await write_edges(session)
+            # Write nodes
+            nodes_start = time.perf_counter()
+            await write_nodes(session)
+            nodes_elapsed = time.perf_counter() - nodes_start
+            print(f"Nodes loaded in {nodes_elapsed:.4f}s")
+            # Write edges after nodes have been created
+            edges_start = time.perf_counter()
+            await write_edges(session)
+            edges_elapsed = time.perf_counter() - edges_start
+            print(f"Edges loaded in {edges_elapsed:.4f}s")
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ First, fake male and female profile information is generated for the number of p
 ```sh
 $ cd data
 # Create a dataset of fake profiles for men and women with a 50-50 split by gender
-$ python create_nodes_person.py -n 100000
+$ uv run create_nodes_person.py -n 100000
 ```
 
 The parquet file generated fake person metadata, and looks like the below.
@@ -41,7 +41,7 @@ To generate a list of cities that people live in, we use the [world cities datas
 To make this dataset simpler and more realistic, we only consider cities from the following three countries: `US`, `UK` and `CA`.
 
 ```sh
-$ python create_nodes_location.py
+$ uv run create_nodes_location.py
 
 Wrote 7117 cities to parquet
 Wrote 273 states to parquet
@@ -78,7 +78,7 @@ id|country
 A static list of interests/hobbies that a person could have is included in `raw/interests.parquet`. This is cleaned up and formatted as required by the data generator script.
 
 ```sh
-$ python create_nodes_interests.py
+$ uv run create_nodes_interests.py
 ```
 
 This generates data as shown below.
@@ -112,7 +112,7 @@ The "hub" nodes can be connected to anywhere from 0.5-5% of the number of person
 Edges are generated between people and the cities they live in. This is done by randomly choosing a city for each person from the list of cities generated earlier.
 
 ```sh
-$ python create_edges_location.py
+$ uv run create_edges_location.py
 ```
 
 The data generated contains the person ID in the `from` column and the city ID in the `to` column.

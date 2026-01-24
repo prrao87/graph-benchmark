@@ -2,9 +2,9 @@
 Run a series of queries on the Neo4j database
 """
 import os
+import time
 
 import polars as pl
-from codetiming import Timer
 from dotenv import load_dotenv
 from neo4j import GraphDatabase, Session
 
@@ -23,7 +23,6 @@ def run_query1(session: Session) -> None:
         ORDER BY numFollowers DESC LIMIT 3
     """
     print(f"\nQuery 1:\n {query}")
-    # with Timer(name="query1", text="Query 1 completed in {:.6f}s"):
     response = session.run(query)
     result = pl.from_dicts(response.data())
     print(f"Top 3 most-followed persons:\n{result}")
@@ -180,18 +179,20 @@ def run_query9(session: Session, age_1: int, age_2: int) -> None:
 def main() -> None:
     with GraphDatabase.driver(URI, auth=(NEO4J_USER, NEO4J_PASSWORD)) as driver:
         with driver.session(database="neo4j") as session:
-            with Timer(name="queries", text="Neo4j query script completed in {:.6f}s"):
-                # fmt: off
-                _ = run_query1(session)
-                _ = run_query2(session)
-                _ = run_query3(session, country="United States")
-                _ = run_query4(session, age_lower=30, age_upper=40)
-                _ = run_query5(session, gender="male", city="London", country="United Kingdom", interest="fine dining")
-                _ = run_query6(session, gender="female", interest="tennis")
-                _ = run_query7(session, country="United States", age_lower=23, age_upper=30, interest="photography")
-                _ = run_query8(session)
-                _ = run_query9(session, age_1=50, age_2=25)
-                # fmt: on
+            start = time.perf_counter()
+            # fmt: off
+            _ = run_query1(session)
+            _ = run_query2(session)
+            _ = run_query3(session, country="United States")
+            _ = run_query4(session, age_lower=30, age_upper=40)
+            _ = run_query5(session, gender="male", city="London", country="United Kingdom", interest="fine dining")
+            _ = run_query6(session, gender="female", interest="tennis")
+            _ = run_query7(session, country="United States", age_lower=23, age_upper=30, interest="photography")
+            _ = run_query8(session)
+            _ = run_query9(session, age_1=50, age_2=25)
+            # fmt: on
+            elapsed = time.perf_counter() - start
+            print(f"Neo4j query script completed in {elapsed:.6f}s")
 
 
 if __name__ == "__main__":

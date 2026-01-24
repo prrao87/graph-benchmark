@@ -1,11 +1,11 @@
 """
-Run a series of queries on an existing Kùzu database
+Run a series of queries on an existing Ladybug database
 """
+import time
 from typing import Any
 
-import kuzu
-from codetiming import Timer
-from kuzu import Connection
+import real_ladybug as lb
+from real_ladybug import Connection
 
 
 def run_query1(conn: Connection) -> None:
@@ -167,38 +167,39 @@ def run_query9(conn: Connection, params: list[tuple[str, Any]]) -> None:
 
 
 def main(conn: Connection) -> None:
-    with Timer(name="queries", text="Queries completed in {:.4f}s"):
-        _ = run_query1(conn)
-        _ = run_query2(conn)
-        _ = run_query3(conn, params={"country": "United States"})
-        _ = run_query4(conn, params={"age_lower": 30, "age_upper": 40})
-        _ = run_query5(
-            conn,
-            params={
-                "gender": "male",
-                "city": "London",
-                "country": "United Kingdom",
-                "interest": "fine dining",
-            },
-        )
-        _ = run_query6(conn, params={"gender": "female", "interest": "tennis"})
-        _ = run_query7(
-            conn,
-            params={
-                "country": "United States",
-                "age_lower": 23,
-                "age_upper": 30,
-                "interest": "photography",
-            },
-        )
-        _ = run_query8(conn)
-        _ = run_query9(conn, params={"age_1": 50, "age_2": 25})
+    start = time.perf_counter()
+    _ = run_query1(conn)
+    _ = run_query2(conn)
+    _ = run_query3(conn, params={"country": "United States"})
+    _ = run_query4(conn, params={"age_lower": 30, "age_upper": 40})
+    _ = run_query5(
+        conn,
+        params={
+            "gender": "male",
+            "city": "London",
+            "country": "United Kingdom",
+            "interest": "fine dining",
+        },
+    )
+    _ = run_query6(conn, params={"gender": "female", "interest": "tennis"})
+    _ = run_query7(
+        conn,
+        params={
+            "country": "United States",
+            "age_lower": 23,
+            "age_upper": 30,
+            "interest": "photography",
+        },
+    )
+    _ = run_query8(conn)
+    _ = run_query9(conn, params={"age_1": 50, "age_2": 25})
+    elapsed = time.perf_counter() - start
+    print(f"Queries completed in {elapsed:.4f}s")
 
 
 if __name__ == "__main__":
-    DB_NAME = "social_network"
-    db = kuzu.Database(f"./{DB_NAME}")
-    # Default num_threads=0 uses as many threads as hardware and utilization allows
-    CONNECTION = kuzu.Connection(db, num_threads=0)
+    DB_NAME = "social_network.lbug"
+    db = lb.Database(f"./{DB_NAME}")
+    CONNECTION = lb.Connection(db)
 
     main(CONNECTION)
