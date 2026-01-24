@@ -1,9 +1,8 @@
 import asyncio
-import shutil
+import time
 from pathlib import Path
 
 import kuzu
-from codetiming import Timer
 
 DATA_PATH = Path(__file__).resolve().parents[1] / "data"
 NODES_PATH = DATA_PATH / "output" / "nodes"
@@ -95,35 +94,39 @@ async def create_edge_tables(conn: kuzu.AsyncConnection) -> None:
 
 
 async def main(conn: kuzu.AsyncConnection) -> None:
-    with Timer(name="nodes", text="Nodes loaded in {:.4f}s"):
-        # Nodes
-        await create_person_node_table(conn)
-        await create_city_node_table(conn)
-        await create_state_node_table(conn)
-        await create_country_node_table(conn)
-        await create_interest_node_table(conn)
-        await conn.execute(f"COPY Person FROM '{NODES_PATH}/persons.parquet';")
-        await conn.execute(f"COPY City FROM '{NODES_PATH}/cities.parquet';")
-        await conn.execute(f"COPY State FROM '{NODES_PATH}/states.parquet';")
-        await conn.execute(f"COPY Country FROM '{NODES_PATH}/countries.parquet';")
-        await conn.execute(f"COPY Interest FROM '{NODES_PATH}/interests.parquet';")
+    nodes_start = time.perf_counter()
+    # Nodes
+    await create_person_node_table(conn)
+    await create_city_node_table(conn)
+    await create_state_node_table(conn)
+    await create_country_node_table(conn)
+    await create_interest_node_table(conn)
+    await conn.execute(f"COPY Person FROM '{NODES_PATH}/persons.parquet';")
+    await conn.execute(f"COPY City FROM '{NODES_PATH}/cities.parquet';")
+    await conn.execute(f"COPY State FROM '{NODES_PATH}/states.parquet';")
+    await conn.execute(f"COPY Country FROM '{NODES_PATH}/countries.parquet';")
+    await conn.execute(f"COPY Interest FROM '{NODES_PATH}/interests.parquet';")
+    nodes_elapsed = time.perf_counter() - nodes_start
+    print(f"Nodes loaded in {nodes_elapsed:.4f}s")
 
-    with Timer(name="edges", text="Edges loaded in {:.4f}s"):
-        # Edges
-        await create_edge_tables(conn)
-        await conn.execute(f"COPY Follows FROM '{EDGES_PATH}/follows.parquet';")
-        await conn.execute(f"COPY LivesIn FROM '{EDGES_PATH}/lives_in.parquet';")
-        await conn.execute(f"COPY HasInterest FROM '{EDGES_PATH}/interested_in.parquet';")
-        await conn.execute(f"COPY CityIn FROM '{EDGES_PATH}/city_in.parquet';")
-        await conn.execute(f"COPY StateIn FROM '{EDGES_PATH}/state_in.parquet';")
+    edges_start = time.perf_counter()
+    # Edges
+    await create_edge_tables(conn)
+    await conn.execute(f"COPY Follows FROM '{EDGES_PATH}/follows.parquet';")
+    await conn.execute(f"COPY LivesIn FROM '{EDGES_PATH}/lives_in.parquet';")
+    await conn.execute(f"COPY HasInterest FROM '{EDGES_PATH}/interested_in.parquet';")
+    await conn.execute(f"COPY CityIn FROM '{EDGES_PATH}/city_in.parquet';")
+    await conn.execute(f"COPY StateIn FROM '{EDGES_PATH}/state_in.parquet';")
+    edges_elapsed = time.perf_counter() - edges_start
+    print(f"Edges loaded in {edges_elapsed:.4f}s")
 
-    print("Successfully loaded nodes and edges into KùzuDB!")
+    print("Successfully loaded nodes and edges into Kuzu")
 
 
 if __name__ == "__main__":
-    DB_NAME = "social_network"
-    # Delete directory each time till we have MERGE FROM available in kuzu
-    shutil.rmtree(DB_NAME, ignore_errors=True)
+    DB_NAME = "social_network.kuzu"
+    db_path = Path(f"./{DB_NAME}")
+    db_path.unlink(missing_ok=True)
     # Create database
     db = kuzu.Database(f"./{DB_NAME}")
     CONNECTION = kuzu.AsyncConnection(db)

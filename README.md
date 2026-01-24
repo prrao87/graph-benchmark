@@ -1,35 +1,26 @@
-# Kuzu: Benchmark study
+# Graph benchmarks
 
-Code for the benchmark study described in this [blog post](https://thedataquarry.com/posts/embedded-db-2/).
+The code in this repo was originally a benchmark for Kuzu described in this [blog post](https://thedataquarry.com/posts/embedded-db-2/). Since October 2025, Kuzu has been archived and is no longer maintained. Kuzu is now succeeded by a fork, [Ladybug](https://github.com/LadybugDB/ladybug), maintained by @adsharma.
 
-Neo4j version | Kuzu version | Python version
-:---: | :---: | :---:
-2025.03.0 (community) | 0.9.0 | 3.12.7
+The benchmarks below are designed to compare multi-hop retrieval performance on Neo4j and Kuzu with newer systems like Ladybug and [lance-graph](https://github.com/lance-format/lance-graph),
+an open source graph engine built in Rust on top of the Lance format.
 
-[Kuzu](https://kuzudb.com/) is an in-process (embedded) graph database management system (GDBMS) written in C++. It is blazing fast 🔥, and is optimized for handling complex join-heavy analytical workloads on very large graphs. Kuzu's [goal](https://kuzudb.com/docusaurus/blog/what-every-gdbms-should-do-and-vision) is to do in the graph database world what DuckDB has done in the world of relational databases -- that is, to provide a fast, lightweight, embeddable graph database for analytics (OLAP) use cases, while being heavily focused on usability and developer productivity.
-
-This study has the following goals:
+The benchmark performs the following tasks:
 
 * Generate an artificial social network dataset, including persons, interests and locations
   * You can scale up the size of the artificial dataset using the scripts provided and test query performance on larger graphs
 * Ingest the dataset into two graph databases: Kuzu and Neo4j (community edition)
-* Run a set of queries in Cypher on either DB to:
-  * (1) Verify that the data is ingested correctly and that the results from either DB are consistent with one another
-  * (2) Compare the query performance on a suite of queries that involve multi-hop traversals and aggregations
-
-Python (and the associated client APIs for either DB) are used to orchestrate the pipelines throughout.
+* Run a set of queries that compare the query performance on a suite of queries that involve multi-hop traversals or top-k results with filters and aggregations
 
 ## Setup
 
-Activate a Python virtual environment and install the dependencies as follows.
+We use [uv](https://docs.astral.sh/uv/getting-started/installation/) to manage the dependencies.
 
 ```sh
-# Assuming that the uv package manager is installed
-# https://github.com/astral-sh/uv
-uv venv
-source .venv/bin/activate
-uv pip install -r requirements.txt
+# Sync the dependencies locally
+uv sync
 ```
+All the dependencies are listed in `pyproject.toml`.
 
 ## Data
 
@@ -62,9 +53,9 @@ The following graph schema is used for the social network dataset.
 
 ## Ingest the data into Neo4j or Kuzu
 
-Navigate to the [neo4j](./neo4j) and the [kuzudb](./kuzudb/) directories to see the instructions on how to ingest the data into each database.
+Navigate to the individual directories to see the instructions on how to ingest the data into each graph system.
 
-The generated graph is a well-connected graph, and a sample of `Person`-`Person` connections as visualized in the Neo4j browser is shown below. Certain groups of persons form a clique, and some others are central hubs with many connections, and each person can have many interests, but only one primary residence city.
+The generated graph is quite well-connected with rich edges, and a sample of `Person`-`Person` connections is visualized below. Certain groups of persons form a clique, and some others are central hubs with many connections, and each person can have many interests, but only one primary residence city.
 
 ![](./assets/person-person.png)
 
@@ -84,82 +75,34 @@ The following questions are asked of both graphs:
 * **Query 8**: How many second-degree paths exist in the graph?
 * **Query 9**: How many paths exist in the graph through persons age 50 to persons above age 25?
 
+## High-level results
 
-## Performance comparison
+| Query | neo4j (ms) | kuzu (ms) | ladybug (ms) |
+| --- | --- | --- | --- |
+| q1 | 1676ms | 140ms (12.0x) | 142ms (11.8x) |
+| q2 | 448ms | 213ms (2.1x) | 217ms (2.1x) |
+| q3 | 39ms | 6ms (6.1x) | 7ms (5.7x) |
+| q4 | 39ms | 10ms (4.0x) | 10ms (3.9x) |
+| q5 | 9ms | 11ms (0.8x) | 11ms (0.8x) |
+| q6 | 22ms | 27ms (0.8x) | 28ms (0.8x) |
+| q7 | 121ms | 11ms (10.9x) | 12ms (10.4x) |
+| q8 | 2916ms | 6ms (453.9x) | 7ms (445.2x) |
+| q9 | 3235ms | 86ms (37.7x) | 87ms (37.4x) |
 
-The run times for both ingestion and queries are compared.
-
-* For ingestion, KùzuDB is consistently faster than Neo4j by a factor of **~18x** for a 
-* For OLAP queries, KùzuDB is **significantly faster** than Neo4j, especially for ones that involve multi-hop queries via nodes with many-to-many relationships.
-
-### Benchmark conditions
-
-- Machine: M3 Macbook Pro with 36 GB RAM.
-- Graph size: 100K nodes, ~2.4M edges.
-
-### Ingestion performance
-
-Case | Neo4j (sec) | Kuzu (sec) | Speedup factor
---- | ---: | ---: | ---:
-Nodes | 1.85 | 0.13 | 14.2x
-Edges | 28.79 | 0.45 | 64.0x
-Total | 30.64 | 0.58 | 52.8x
-
-Nodes are ingested significantly faster in Kuzu, and using its community edition, Neo4j's node ingestion
-remains of the order of seconds
-despite setting constraints on the ID fields as per their best practices. The speedup factors shown
-are expected to be even higher as the dataset gets larger and larger using this approach, and
-the only way to speed up Neo4j data ingestion is to use `admin-import` instead (however, this means
-you lose the ability to work in Python and have to switch languages).
-
-### Query performance benchmark
-
-The full benchmark numbers are in the `README.md` pages for respective directories for `neo4j` and `kuzudb`, with the high-level summary shown below.
-
-#### Notes on benchmark timing
-
-The benchmarks are run via the `pytest-benchmark` library for the query scripts for either DB. `pytest-benchmark`, which is built on top of `pytest`, attaches each set of runs to a timer. It uses the Python time module's [`time.perf_counter`](https://docs.python.org/3/library/time.html#time.perf_counter), which has a resolution of 500 ns, smaller than the run time of the fastest query in this dataset.
-
-* 5 warmup runs are performed to ensure byte code compilation and to warm up the cache prior to measuring run times
-* Each query is run for a **minimum of 5 rounds**, so the run times shown in each section below as the **average over a minimum of 5 rounds**, or upwards of 50 rounds.
-  * Long-running queries (where the total run time exceeds 1 sec) are run for at least 5 rounds.
-  * Short-running queries (of the order of milliseconds) will run as many times as fits into a period of 1 second, so the fastest queries can run upwards of 50 times.
-* Python's own GC overhead can obscure true run times, so the `benchmark-disable-gc` argument is enabled.
-
-See the [`pytest-benchmark` docs](https://pytest-benchmark.readthedocs.io/en/latest/calibration.html) to see how they calibrate their timer and group the rounds.
-
-#### Neo4j vs. Kuzu
-
-KùzuDB supports multi-threaded execution of queries with maximum thread utilization as available on the machine.
-The run times for each query (averaged over the number of rounds run, guaranteed to be a minimum of 5 runs) are shown below.
-
-Query | Neo4j (sec) | Kuzu (sec) | Speedup factor
---- | ---: | ---: | ---:
-1 | 1.7267 | 0.1603 | 10.77
-2 | 0.6073 | 0.2498 | 2.43
-3 | 0.0376 | 0.0085 | 4.42
-4 | 0.0411 | 0.0147 | 2.80
-5 | 0.0075 | 0.0134 | 0.56
-6 | 0.0194 | 0.0362 | 0.54
-7 | 0.1384 | 0.0151 | 9.17
-8 | 3.2203 | 0.0086 | 374.45
-9 | 3.8970 | 0.0955 | 40.81
-
-> 🔥 The n-hop path-finding queries (8 and 9) show the biggest speedup over Neo4j, due to core innovations in Kuzu's query engine.
+> 🔥 The n-hop path-finding queries (8 and 9) in Kuzu/Ladybug benefit from hybrid joins (WCOJ + bionary) and factorization, which are query processing innovations described in the [Kùzu research paper](https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf).
 
 ### Ideas for future work
 
 #### Scale up the dataset
 
-You can attempt to generate a much larger artificial dataset of ~100M nodes and ~2.5B edges, and see how the performance of Kuzu and Neo4j compare, if you're interested.
+You can attempt to generate a much larger artificial dataset of ~100M nodes and ~2.5B edges, and see how the performance compares across these different systems, if you're interested.
 
 ```sh
-# Generate data with 100M persons and ~2.5B edges (takes a long time in Python!)
+# Generate data with 100M persons and ~2.5B edges (WARNING: takes a long time in Python!)
 bash generate_data.sh 100000000
 ```
 
-The above script can take really long to run in Python. [Here's an example](https://github.com/thedataquarry/rustinpieces/tree/main/src/mock_data)
-of using the `fake-rs` crate in Rust to do this much faster.
+Python is really slow to generate data of that scale. [Here's an example](https://github.com/thedataquarry/rustinpieces/tree/main/src/mock_data) of using Rust and the `fake-rs` crate to do this much faster.
 
 #### Relationship property aggregation
 

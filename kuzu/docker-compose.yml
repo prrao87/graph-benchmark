@@ -4,7 +4,8 @@ services:
     restart: unless-stopped
     environment:
       - MODE=READ_ONLY
+      - KUZU_FILE=social_network.kuzu
     ports:
       - 8000:8000
     volumes:
-      - ./social_network:/database
+      - ./:/database

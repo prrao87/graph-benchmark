@@ -48,11 +48,11 @@ The numbers shown below are for when we ingest 100K person nodes, ~10K location 
 - The batch size is set to 500K, which may seem large at first glance, but for the given data, the nodes and edges, even after `UNWIND`ing in Cypher, are small enough to fit in batch memory per transaction -- the memory requirements may be different on more complex datasets
 
 ```sh
-# Set large batch size of 500k
-$ python build_graph.py -b 500000
+# Graph has 100K nodes and ~2.4M edges
+$ uv run build_graph.py -b 500000
 
-Nodes loaded in 3.5183s
-Edges loaded in 41.6437s
+Nodes loaded in 3.2s
+Edges loaded in 39.1s
 ```
 
 As expected, the nodes load much faster than the edges, since there are many more edges than nodes. In addition, the nodes in Neo4j are indexed (via uniqueness constraints), following which the edges are created based on a match on existing nodes, allowing us to achieve this performance.
@@ -252,33 +252,35 @@ Neo4j query script completed in 9.590890s
 The benchmark is run using `pytest-benchmark` package as follows.
 
 ```sh
-$ pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-iterations=5 --benchmark-disable-gc --benchmark-sort=fullname
-======================================= test session starts =======================================
-platform darwin -- Python 3.13.2, pytest-8.3.5, pluggy-1.5.0
-benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=True min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=5)
-rootdir: /Users/prrao/code/kuzudb-study/neo4j
-plugins: Faker-37.1.0, benchmark-5.1.0
-collected 9 items                                                                                 
+$ uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-iterations=5 --benchmark-disable-gc --benchmark-sort=fullname
+==================================== test session starts =====================================
+platform darwin -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=True min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=5)
+rootdir: /Users/prrao/code/graph-benchmark
+configfile: pyproject.toml
+plugins: anyio-4.12.1, benchmark-5.2.3, asyncio-1.3.0, Faker-40.1.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 9 items                                                                            
 
-benchmark_query.py .........                                                                [100%]
+benchmark_query.py .........                                                           [100%]
 
 
 --------------------------------------------------------------------------------- benchmark: 9 tests ---------------------------------------------------------------------------------
 Name (time in s)             Min               Max              Mean            StdDev            Median               IQR            Outliers       OPS            Rounds  Iterations
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-test_benchmark_query1     1.6656 (245.03)   1.7915 (180.61)   1.7267 (231.02)   0.0537 (108.84)   1.7075 (232.26)   0.0904 (219.76)        2;0    0.5791 (0.00)          5           1
-test_benchmark_query2     0.5971 (87.84)    0.6323 (63.74)    0.6073 (81.25)    0.0142 (28.71)    0.6020 (81.88)    0.0100 (24.26)         1;1    1.6466 (0.01)          5           1
-test_benchmark_query3     0.0342 (5.04)     0.0458 (4.61)     0.0376 (5.03)     0.0024 (4.89)     0.0377 (5.12)     0.0024 (5.92)          5;1   26.6008 (0.20)         25           1
-test_benchmark_query4     0.0374 (5.50)     0.0627 (6.32)     0.0411 (5.49)     0.0047 (9.60)     0.0397 (5.40)     0.0028 (6.74)          1;1   24.3566 (0.18)         27           1
-test_benchmark_query5     0.0068 (1.0)      0.0099 (1.0)      0.0075 (1.0)      0.0005 (1.0)      0.0074 (1.0)      0.0004 (1.0)          14;7  133.7898 (1.0)          98           1
-test_benchmark_query6     0.0172 (2.53)     0.0222 (2.24)     0.0194 (2.59)     0.0012 (2.38)     0.0194 (2.64)     0.0015 (3.59)         17;1   51.6263 (0.39)         46           1
-test_benchmark_query7     0.1363 (20.05)    0.1399 (14.10)    0.1384 (18.51)    0.0013 (2.62)     0.1383 (18.82)    0.0021 (5.11)          2;0    7.2268 (0.05)          8           1
-test_benchmark_query8     3.1932 (469.75)   3.2424 (326.87)   3.2203 (430.84)   0.0201 (40.82)    3.2165 (437.53)   0.0319 (77.49)         2;0    0.3105 (0.00)          5           1
-test_benchmark_query9     3.8725 (569.69)   3.9164 (394.81)   3.8970 (521.37)   0.0166 (33.63)    3.9005 (530.58)   0.0221 (53.72)         2;0    0.2566 (0.00)          5           1
+test_benchmark_query1     1.6191 (232.32)   1.7303 (134.06)   1.6764 (194.65)   0.0463 (66.73)    1.6972 (204.32)   0.0729 (117.33)        2;0    0.5965 (0.01)          5           1
+test_benchmark_query2     0.4390 (62.99)    0.4650 (36.03)    0.4479 (52.01)    0.0100 (14.44)    0.4458 (53.67)    0.0094 (15.15)         1;0    2.2324 (0.02)          5           1
+test_benchmark_query3     0.0364 (5.22)     0.0449 (3.48)     0.0390 (4.53)     0.0029 (4.19)     0.0380 (4.57)     0.0027 (4.31)          1;1   25.6487 (0.22)          7           1
+test_benchmark_query4     0.0353 (5.07)     0.0428 (3.31)     0.0387 (4.49)     0.0022 (3.15)     0.0387 (4.66)     0.0024 (3.84)          4;0   25.8466 (0.22)         11           1
+test_benchmark_query5     0.0070 (1.0)      0.0129 (1.0)      0.0086 (1.0)      0.0015 (2.11)     0.0083 (1.0)      0.0016 (2.54)          5;1  116.1135 (1.0)          18           1
+test_benchmark_query6     0.0192 (2.75)     0.0276 (2.14)     0.0218 (2.53)     0.0023 (3.35)     0.0214 (2.58)     0.0031 (5.07)          5;0   45.8538 (0.39)         17           1
+test_benchmark_query7     0.1201 (17.23)    0.1221 (9.46)     0.1208 (14.03)    0.0007 (1.0)      0.1207 (14.54)    0.0006 (1.0)           2;1    8.2757 (0.07)          6           1
+test_benchmark_query8     2.8604 (410.44)   2.9741 (230.43)   2.9159 (338.57)   0.0439 (63.23)    2.9166 (351.13)   0.0656 (105.56)        2;0    0.3429 (0.00)          5           1
+test_benchmark_query9     3.2240 (462.62)   3.2548 (252.19)   3.2347 (375.59)   0.0132 (19.02)    3.2282 (388.64)   0.0198 (31.94)         1;0    0.3092 (0.00)          5           1
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Legend:
   Outliers: 1 Standard Deviation from Mean; 1.5 IQR (InterQuartile Range) from 1st Quartile and 3rd Quartile.
   OPS: Operations Per Second, computed as 1 / Mean
-================================== 9 passed in 72.72s (0:01:12) ===================================
+================================ 9 passed in 62.50s (0:01:02) ================================
 ```
