@@ -1,0 +1,11 @@
+services:
+  explorer:
+    image: ghcr.io/ladybugdb/explorer:latest
+    restart: unless-stopped
+    environment:
+      - MODE=READ_ONLY
+      - LBUG_FILE=social_network.lbug
+    ports:
+      - 8000:8000
+    volumes:
+      - ./:/database
