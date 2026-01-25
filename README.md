@@ -77,17 +77,17 @@ The following questions are asked of both graphs:
 
 ## High-level results
 
-| Query | neo4j (ms) | kuzu (ms) | ladybug (ms) |
-| --- | --- | --- | --- |
-| q1 | 1676ms | 140ms (12.0x) | 142ms (11.8x) |
-| q2 | 448ms | 213ms (2.1x) | 217ms (2.1x) |
-| q3 | 39ms | 6ms (6.1x) | 7ms (5.7x) |
-| q4 | 39ms | 10ms (4.0x) | 10ms (3.9x) |
-| q5 | 9ms | 11ms (0.8x) | 11ms (0.8x) |
-| q6 | 22ms | 27ms (0.8x) | 28ms (0.8x) |
-| q7 | 121ms | 11ms (10.9x) | 12ms (10.4x) |
-| q8 | 2916ms | 6ms (453.9x) | 7ms (445.2x) |
-| q9 | 3235ms | 86ms (37.7x) | 87ms (37.4x) |
+| Query | neo4j (ms) | kuzu (ms) | ladybug (ms) | lance-graph (ms) |
+| --- | --- | --- | --- | --- |
+| q1 | 1676ms | 140ms (12.0x) | 142ms (11.8x) | 31ms (54.7x) |
+| q2 | 448ms | 213ms (2.1x) | 217ms (2.1x) | 73ms (6.1x) |
+| q3 | 39ms | 6ms (6.1x) | 7ms (5.7x) | 10ms (4.1x) |
+| q4 | 39ms | 10ms (4.0x) | 10ms (3.9x) | 7ms (5.6x) |
+| q5 | 9ms | 11ms (0.8x) | 11ms (0.8x) | 8ms (1.1x) |
+| q6 | 22ms | 27ms (0.8x) | 28ms (0.8x) | 10ms (2.1x) |
+| q7 | 121ms | 11ms (10.9x) | 12ms (10.4x) | 9ms (13.1x) |
+| q8 | 2916ms | 6ms (453.9x) | 7ms (445.2x) | 177ms (16.5x) |
+| q9 | 3235ms | 86ms (37.7x) | 87ms (37.4x) | 157ms (20.6x) |
 
 > 🔥 The n-hop path-finding queries (8 and 9) in Kuzu/Ladybug benefit from hybrid joins (WCOJ + bionary) and factorization, which are query processing innovations described in the [Kùzu research paper](https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf).
 
