@@ -1,11 +1,11 @@
 # Graph benchmarks
 
-The code in this repo was originally a benchmark for Kuzu described in this [blog post](https://thedataquarry.com/posts/embedded-db-2/). Since October 2025, Kuzu has been archived and is no longer maintained. Kuzu is now succeeded by a fork, [Ladybug](https://github.com/LadybugDB/ladybug), maintained by @adsharma.
+This repo was originally a benchmark for Kuzu described in this [blog post](https://thedataquarry.com/posts/embedded-db-2/). Since October 2025, Kuzu has been archived and is no longer maintained. Kuzu is now succeeded by a fork, [Ladybug](https://github.com/LadybugDB/ladybug), maintained by @adsharma.
 
-The benchmarks below are designed to compare multi-hop retrieval performance on Neo4j and Kuzu with newer systems like Ladybug and [lance-graph](https://github.com/lance-format/lance-graph),
+The benchmarks below are updated to compare multi-hop retrieval performance across newer systems like Ladybug and [lance-graph](https://github.com/lance-format/lance-graph),
 an open source graph engine built in Rust on top of the Lance format.
 
-The benchmark performs the following tasks:
+It does the following:
 
 * Generate an artificial social network dataset, including persons, interests and locations
   * You can scale up the size of the artificial dataset using the scripts provided and test query performance on larger graphs
@@ -26,7 +26,9 @@ All the dependencies are listed in `pyproject.toml`.
 
 An artificial social network dataset is generated specifically for this exercise, via the [Faker](https://faker.readthedocs.io/en/master/) Python library.
 
-### Generate all data at once
+### Generate dataset
+
+We'll create an artificial dataset of 100K person profiles, and their associated 
 
 A shell script `generate_data.sh` is provided in the root directory of this repo that sequentially runs the Python scripts, generating the data for the nodes and edges for the social network. This is the recommended way to generate the data. A single positional argument is provided to the shell script: The number of person profiles to generate -- this is specified as an integer, as shown below.
 
@@ -34,16 +36,33 @@ A shell script `generate_data.sh` is provided in the root directory of this repo
 # Generate data with 100K persons and ~2.4M edges
 bash generate_data.sh 100000
 ```
+This outputs:
+```
+Generating 100000 samples of data
+Generate 50000 fake female profiles.
+Generate 50000 fake male profiles.
+Wrote 100000 person nodes to parquet
+Obtained 7125 cities from countries: ['US', 'GB', 'CA']
+Wrote 7117 cities to parquet
+Wrote 273 states to parquet
+Wrote 3 countries to parquet
+Wrote 41 interests nodes to parquet
+Generated 999987 edges in total without self-connections
+Generated 500 super nodes for 100000 persons
+Wrote 2417738 edges for 100000 persons
+Generated residence cities for persons. Top 5 common cities are: Dallas, Portland, Kansas City, Manhattan, Sacramento
+Wrote 250067 edges for 100000 persons
+Wrote 7117 edges for 7117 cities
+Wrote 273 edges for 273 states
+```
 
-Running this command generates a series of files in the `output` directory, following which we can proceed to ingesting the data into a graph database.
-
-See [./data/README.md](./data/README.md) for more details on each script that is run sequentially to generate the data.
+We are now ready with the benchmark dataset in Parquet format!
 
 ## Graph schema
 
 The following graph schema is used for the social network dataset.
 
-![](./assets/kuzudb-graph-schema.png)
+![](./assets/graph-schema.png)
 
 * `Person` node `FOLLOWS` another `Person` node
 * `Person` node `LIVES_IN` a `City` node
@@ -51,13 +70,13 @@ The following graph schema is used for the social network dataset.
 * `City` node is `CITY_IN` a `State` node
 * `State` node is `STATE_IN` a `Country` node
 
-## Ingest the data into Neo4j or Kuzu
+## Ingest the data
 
 Navigate to the individual directories to see the instructions on how to ingest the data into each graph system.
 
-The generated graph is quite well-connected with rich edges, and a sample of `Person`-`Person` connections is visualized below. Certain groups of persons form a clique, and some others are central hubs with many connections, and each person can have many interests, but only one primary residence city.
+The generated graph is quite well-connected with rich edges, and a subgraphis visualized below. Certain groups of persons form a clique, and some others are central hubs with many connections, and each person can have many interests, but only one primary residence city.
 
-![](./assets/person-person.png)
+![](./assets/subgraph.png)
 
 ## Run the queries
 
@@ -88,6 +107,10 @@ The following questions are asked of both graphs:
 | q7 | 121ms | 11ms (10.9x) | 12ms (10.4x) | 9ms (13.1x) |
 | q8 | 2916ms | 6ms (453.9x) | 7ms (445.2x) | 177ms (16.5x) |
 | q9 | 3235ms | 86ms (37.7x) | 87ms (37.4x) | 157ms (20.6x) |
+
+See the [results](./results/) directory for the script used to output the result plot.
+
+![](./results/benchmark_plot.png)
 
 > 🔥 The n-hop path-finding queries (8 and 9) in Kuzu/Ladybug benefit from hybrid joins (WCOJ + bionary) and factorization, which are query processing innovations described in the [Kùzu research paper](https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf).
 
