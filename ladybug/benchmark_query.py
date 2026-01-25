@@ -15,7 +15,7 @@ import query
 
 @pytest.fixture
 def connection():
-    db = lb.Database("social_network.lbug")
+    db = lb.Database("social_network.lbdb")
     conn = lb.Connection(db)
     yield conn
 

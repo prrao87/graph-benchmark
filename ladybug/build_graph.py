@@ -124,7 +124,7 @@ async def main(conn: lb.AsyncConnection) -> None:
 
 
 if __name__ == "__main__":
-    DB_NAME = "social_network.lbug"
+    DB_NAME = "social_network.lbdb"
     # Delete database file each time till we have MERGE FROM available in Ladybug
     db_path = Path(f"./{DB_NAME}")
     db_path.unlink(missing_ok=True)

@@ -135,6 +135,7 @@ dmypy.json
 test
 social_network.kuzu
 social_network.lbug
+social_network.lbdb
 data/output/nodes/*.parquet
 data/output/edges/*.parquet
 lance_graph/graph_lance/

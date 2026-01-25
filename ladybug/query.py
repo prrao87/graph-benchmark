@@ -198,7 +198,7 @@ def main(conn: Connection) -> None:
 
 
 if __name__ == "__main__":
-    DB_NAME = "social_network.lbug"
+    DB_NAME = "social_network.lbdb"
     db = lb.Database(f"./{DB_NAME}")
     CONNECTION = lb.Connection(db)
 
