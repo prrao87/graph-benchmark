@@ -108,11 +108,13 @@ The following questions are asked of both graphs:
 | q8 | 2916ms | 6ms (453.9x) | 7ms (445.2x) | 177ms (16.5x) |
 | q9 | 3235ms | 86ms (37.7x) | 87ms (37.4x) | 157ms (20.6x) |
 
-See the [results](./results/) directory for the script used to output the result plot.
-
 ![](./results/benchmark_plot.png)
 
 > 🔥 The n-hop path-finding queries (8 and 9) in Kuzu/Ladybug benefit from hybrid joins (WCOJ + bionary) and factorization, which are query processing innovations described in the [Kùzu research paper](https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf).
+
+## Explanation of results
+
+See the [results](./results/) directory for an explanation of query results, and the script used to generate the plot.
 
 ### Ideas for future work
 

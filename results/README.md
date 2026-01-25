@@ -30,7 +30,7 @@ These results reflect several layers of system behavior, not just “the query p
 - The storage and access paths also matter. Neo4j’s property graph storage favors pointer-based traversals, whereas Kuzu/Ladybug store properties in columnar form and execute traversal patterns using join-style operators, and `lance-graph` operates on Arrow/Lance columnar datasets.
 - Deployment overhead can be visible on shorter queries. Neo4j runs as a server accessed over Bolt, while Kuzu/Ladybug and `lance-graph` are embedded/in-process for this benchmark, which reduces per-query overhead.
 
-### Query-by-query intuition
+## Query-by-query intuition
 
 - `q1` (top 3 most-followed people) is an edge scan over `FOLLOWS` followed by `GROUP BY person` with `COUNT(*)`, and then a top-k selection via `ORDER BY ... LIMIT 3`. A good plan uses partial aggregation, avoids a full sort when possible, and delays fetching wide properties (such as names) until the top-k person IDs are known.
 - `q2` (city of the most-followed person) is the same top-k idea with `LIMIT 1`, followed by a single-hop lookup/expand to `LIVES_IN`. The best plans compute the winner first and only then perform the location join, so the expansion stays constant-sized.
@@ -45,7 +45,7 @@ Kuzu/Ladybug excel on `q8`/`q9` because their join-style execution and factoriza
 
 `lance-graph` (which relies on a DataFusion query plan) still performs well on `q8`/`q9` because the engine is vectorized, columnar, and parallel, and it can stream through large joins and aggregates efficiently when the data is already in Arrow/Lance form. However, unless the optimizer applies a rewrite equivalent to the degree-product formulation, the engine still does work proportional to the number of join matches, which helps explain why it is substantially faster than Neo4j while remaining slower than Kuzu/Ladybug on these path-counting queries.
 
-### Inspecting query plans
+## Inspecting query plans
 
 If you want to dig deeper to analyze query performance, most systems provide a way to inspect the plan that the engine chose. This can be useful for validating join order, predicate pushdown, and whether limits and aggregates are applied early.
 
