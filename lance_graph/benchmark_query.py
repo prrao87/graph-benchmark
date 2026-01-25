@@ -8,7 +8,9 @@ uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-ite
 """
 
 from pathlib import Path
+
 import pytest
+
 import query
 
 
@@ -47,9 +49,7 @@ def test_benchmark_query3(benchmark, graph_context):
 
 def test_benchmark_query4(benchmark, graph_context):
     cfg, datasets = graph_context
-    result = benchmark(
-        query.run_query4, cfg, datasets, {"age_lower": 30, "age_upper": 40}
-    )
+    result = benchmark(query.run_query4, cfg, datasets, {"age_lower": 30, "age_upper": 40})
     result = result.to_dicts()
 
     assert len(result) == 3

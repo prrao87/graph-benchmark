@@ -1,7 +1,4 @@
 """
-Docstring for lance_graph.build_graph
-"""
-"""
 Builds Lance datasets for the benchmark graph from Parquet inputs.
 
 Reads node/edge Parquet files under `data/output`, normalizes edge endpoint
@@ -10,10 +7,11 @@ one Lance dataset per label/relationship into `lance_graph/graph_lance`.
 """
 
 from pathlib import Path
+
+import lance
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
-import lance
 
 SCRIPT_ROOT = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_ROOT.parent
@@ -58,9 +56,7 @@ def normalize_columns(t: pa.Table, where: str) -> pa.Table:
     names = t.column_names
     lower = [name.lower() for name in names]
     if len(set(lower)) != len(lower):
-        raise ValueError(
-            f"Lowercasing column names would create duplicates in {where}: {names}"
-        )
+        raise ValueError(f"Lowercasing column names would create duplicates in {where}: {names}")
     if lower != names:
         t = t.rename_columns(lower)
     return t
