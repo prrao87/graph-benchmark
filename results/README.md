@@ -20,7 +20,6 @@ Regenerate the plot for the latest results as follows.
 uv run compare.py
 ```
 
-
 ## Explanation of results
 
 These results reflect several layers of system behavior, not just “the query plan.”
@@ -42,6 +41,15 @@ These results reflect several layers of system behavior, not just “the query p
 - `q7` (top U.S. state by count of people aged 23–30 who like photography) combines filters on age, country, and interest with a join chain, grouped counting by state, and top-1 selection. Join ordering and early filter application strongly influence how much intermediate work is done.
 - `q8` (count of length-2 `FOLLOWS` paths) and `q9` (the same with filters on intermediate and destination node ages) are fundamentally self-joins of the `FOLLOWS(src, dst)` relation on the middle vertex `b`. A straightforward execution strategy enumerates all matching `(a, b, c)` triples and increments a counter, which makes runtime proportional to the number of length-2 paths produced and amplifies per-row overhead in row-at-a-time execution.
 
-Kuzu/Ladybug excel on `q8`/`q9` because their join-style execution and factorization can avoid fully materializing the intermediate "path explosion" when executing these types of queries. Conceptually, `q8` can be computed as a sum over `b` of `inDegree(b) * outDegree(b)`, and `q9` becomes a sum of products with filtered degrees, which is much closer to linear in the edge set than in the number of output paths. See the Kuzu [research paper](https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf) for the technical details.
+Kuzu/Ladybug excel on `q8`/`q9` because their join-style execution and factorization can avoid fully materializing the intermediate “path explosion.” Conceptually, `q8` can be computed as a sum over `b` of `inDegree(b) * outDegree(b)`, and `q9` becomes a sum of products with filtered degrees, which is much closer to linear in the edge set than in the number of output paths. See the Kuzu research paper for details: https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf.
 
 `lance-graph` (which relies on a DataFusion query plan) still performs well on `q8`/`q9` because the engine is vectorized, columnar, and parallel, and it can stream through large joins and aggregates efficiently when the data is already in Arrow/Lance form. However, unless the optimizer applies a rewrite equivalent to the degree-product formulation, the engine still does work proportional to the number of join matches, which helps explain why it is substantially faster than Neo4j while remaining slower than Kuzu/Ladybug on these path-counting queries.
+
+### Inspecting query plans
+
+If you want to dig deeper to analyze query performance, most systems provide a way to inspect the plan that the engine chose. This can be useful for validating join order, predicate pushdown, and whether limits and aggregates are applied early.
+
+- Neo4j supports `EXPLAIN` (plan without execution) and `PROFILE` (plan plus runtime counters). You can prepend `EXPLAIN` or `PROFILE` to any Cypher query and inspect the operator tree and row counts.
+- Kuzu supports `EXPLAIN` for Cypher queries. You can run `EXPLAIN MATCH ... RETURN ...;` and inspect the returned plan text.
+- Ladybug uses the same Cypher dialect as Kuzu for these benchmarks, and the same `EXPLAIN` approach is typically applicable for inspecting its plan output.
+- `lance-graph` can produce the query graph plan and the underlying DataFusion logical and physical plans. The `lance_graph` Python API exposes this via `CypherQuery(...).with_config(cfg).explain(datasets)`, which returns the plan as a string for the provided in-memory datasets.
