@@ -74,7 +74,7 @@ The following graph schema is used for the social network dataset.
 
 Navigate to the individual directories to see the instructions on how to ingest the data into each graph system.
 
-The generated graph is quite well-connected with rich edges, and a subgraphis visualized below. Certain groups of persons form a clique, and some others are central hubs with many connections, and each person can have many interests, but only one primary residence city.
+The generated dataset produces a rich and well-connected graph, a subgraph of which is visualized below. Certain groups of persons form a clique, and some others are central hubs with many connections, and each person can have many interests, but only one primary residence city.
 
 ![](./assets/subgraph.png)
 
