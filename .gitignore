@@ -137,3 +137,4 @@ social_network.kuzu
 social_network.lbug
 data/output/nodes/*.parquet
 data/output/edges/*.parquet
+lance_graph/graph_lance/

@@ -60,6 +60,54 @@ def to_markdown_table(headers: list[str], rows: list[list[str]]) -> str:
     return "\n".join(lines)
 
 
+def plot_results(
+    systems: list[str],
+    queries: list[str],
+    values: list[list[float | None]],
+    output_path: Path,
+) -> None:
+    try:
+        import matplotlib.pyplot as plt
+        import numpy as np
+    except ImportError as exc:
+        raise SystemExit(
+            "matplotlib (and numpy) are required for plotting. "
+            "Install them and retry."
+        ) from exc
+
+    color_map = {
+        "ladybug": "#d62728",
+        "lance-graph": "#7f3fbf",
+        "neo4j": "#1f77b4",
+        "kuzu": "#ff7f0e",
+    }
+    x = np.arange(len(queries))
+    bar_width = 0.8 / max(len(systems), 1)
+    for idx, system in enumerate(systems):
+        offsets = x + (idx - (len(systems) - 1) / 2) * bar_width
+        series = []
+        for row in values:
+            value = row[idx]
+            series.append(float("nan") if value is None else value)
+        plt.bar(
+            offsets,
+            series,
+            width=bar_width,
+            label=system,
+            color=color_map.get(system),
+        )
+
+    plt.xticks(x, queries, rotation=45, ha="right")
+    plt.ylabel("Time (ms, log scale)")
+    plt.yscale("log")
+    plt.title("Graph Benchmark Timing (Lower is Better)")
+    plt.legend(loc="best")
+    plt.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_path, dpi=150)
+    print(f"Wrote plot to {output_path}")
+
+
 def main() -> None:
     results_dir = Path(__file__).resolve().parent
     files = sorted(results_dir.glob("*.txt"))
@@ -78,12 +126,16 @@ def main() -> None:
 
     headers = ["Query"] + [f"{system} (ms)" for system in systems]
     rows = []
+    plot_queries: list[str] = []
+    plot_values: list[list[float | None]] = []
     for query in all_queries:
         display_query = query.replace("test_benchmark_query", "q")
         row = [display_query]
         neo4j_value = system_results.get("neo4j", {}).get(query)
+        series: list[float | None] = []
         for system in systems:
             value = system_results[system].get(query)
+            series.append(value)
             if value is None:
                 row.append("n/a")
                 continue
@@ -98,8 +150,16 @@ def main() -> None:
                 value_text = f"{value_text} ({speedup:.{SPEEDUP_DECIMALS}f}x)"
             row.append(value_text)
         rows.append(row)
+        plot_queries.append(display_query)
+        plot_values.append(series)
 
     print(to_markdown_table(headers, rows))
+    plot_results(
+        systems,
+        plot_queries,
+        plot_values,
+        results_dir / "benchmark_plot.png",
+    )
 
 
 if __name__ == "__main__":
