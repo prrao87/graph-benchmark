@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     environment:
       - MODE=READ_ONLY
-      - LBUG_FILE=social_network.lbug
+      - LBUG_FILE=social_network.lbdb
     ports:
       - 8000:8000
     volumes:
