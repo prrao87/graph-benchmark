@@ -1,5 +1,5 @@
 """
-Run the same benchmark queries as ladybug/query.py against Lance datasets.
+Run benchmark queries against Lance datasets.
 
 - Lance stores each node/edge label as a separate on-disk columnar dataset.
 - GraphConfig maps those datasets into a logical graph schema so Cypher
@@ -18,7 +18,6 @@ from lance_graph import CypherQuery, GraphConfig
 
 SCRIPT_ROOT = Path(__file__).resolve().parent
 GRAPH_ROOT = SCRIPT_ROOT / "graph_lance"
-
 NODE_LABELS = ("Person", "City", "State", "Country", "Interest")
 REL_TYPES = ("FOLLOWS", "LIVES_IN", "HAS_INTEREST", "CITY_IN", "STATE_IN")
 
@@ -214,7 +213,7 @@ def run_query7(
     result = rename_result(result, {"numpersons": "numPersons"})
     print(
         f"""
-        State in {params['country']} with the most users between ages {params['age_lower']}-{params['age_upper']} who have an interest in {params['interest']}:\n{result}
+        State in {params["country"]} with the most users between ages {params["age_lower"]}-{params["age_upper"]} who have an interest in {params["interest"]}:\n{result}
         """
     )
     return result
@@ -252,7 +251,7 @@ def run_query9(
     result = rename_result(result, {"numpaths": "numPaths"})
     print(
         f"""
-        Number of paths through persons below {params['age_1']} to persons above {params['age_2']}:\n{result}
+        Number of paths through persons below {params["age_1"]} to persons above {params["age_2"]}:\n{result}
         """
     )
     return result
