@@ -108,7 +108,7 @@ The following questions are asked of both graphs:
 | q8 | 2916ms | 6ms (453.9x) | 7ms (445.2x) | 177ms (16.5x) |
 | q9 | 3235ms | 86ms (37.7x) | 87ms (37.4x) | 157ms (20.6x) |
 
-For the full outputs and a visual comparison across tools, see the `results` directory.
+See the [results](./results/) directory for the script used to output the result plot.
 
 ![](./results/benchmark_plot.png)
 
