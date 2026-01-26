@@ -198,7 +198,7 @@ def main(conn: Connection) -> None:
 
 
 if __name__ == "__main__":
-    DB_NAME = "social_network"
+    DB_NAME = "social_network.kuzu"
     db = kuzu.Database(f"./{DB_NAME}")
     CONNECTION = kuzu.Connection(db)
 
