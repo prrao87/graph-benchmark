@@ -86,11 +86,11 @@ shape: (5, 2)
 │ ---         ┆ ---        │
 │ str         ┆ f64        │
 ╞═════════════╪════════════╡
-│ Seattle     ┆ 39.655417  │
-│ Dallas      ┆ 39.720371  │
-│ Austin      ┆ 39.771676  │
-│ Kansas City ┆ 39.771793  │
-│ Miami       ┆ 39.773881  │
+│ Seattle     ┆ 39.65897   │
+│ Dallas      ┆ 39.72201   │
+│ Austin      ┆ 39.772832  │
+│ Kansas City ┆ 39.774014  │
+│ Miami       ┆ 39.775695  │
 └─────────────┴────────────┘
 
 Query 4:
@@ -107,72 +107,72 @@ shape: (3, 2)
 │ ---            ┆ ---          │
 │ str            ┆ i64          │
 ╞════════════════╪══════════════╡
-│ United States  ┆ 30714        │
-│ Canada         ┆ 2986         │
-│ United Kingdom ┆ 1842         │
+│ United States  ┆ 30713        │
+│ Canada         ┆ 2989         │
+│ United Kingdom ┆ 1843         │
 └────────────────┴──────────────┘
 
 Query 5:
  
         MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest)
         MATCH (p)-[:LIVES_IN]->(c:City)
-        WHERE lower(i.interest) = lower($interest)
-        AND lower(p.gender) = lower($gender)
+        WHERE i.interest = $interest
+        AND p.gender = $gender
         AND c.city = $city AND c.country = $country
         RETURN count(p) AS numpersons
     
-Number of male users in London, United Kingdom who have an interest in fine dining:
+Number of male users in London, United Kingdom who have an interest in Fine Dining:
 shape: (1, 1)
 ┌────────────┐
 │ numPersons │
 │ ---        │
 │ i64        │
 ╞════════════╡
-│ 4368       │
+│ 48         │
 └────────────┘
 
 Query 6:
  
         MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest)
         MATCH (p)-[:LIVES_IN]->(c:City)
-        WHERE lower(i.interest) = lower($interest)
-        AND lower(p.gender) = lower($gender)
+        WHERE i.interest = $interest
+        AND p.gender = $gender
         RETURN count(p.id) AS numpersons, c.city AS city, c.country AS country
         ORDER BY numpersons DESC LIMIT 5
     
-City with the most female users who have an interest in tennis:
+City with the most female users who have an interest in Tennis:
 shape: (5, 3)
-┌────────────┬──────────────┬───────────────┐
-│ numPersons ┆ city         ┆ country       │
-│ ---        ┆ ---          ┆ ---           │
-│ i64        ┆ str          ┆ str           │
-╞════════════╪══════════════╪═══════════════╡
-│ 4579       ┆ Dallas       ┆ United States │
-│ 4569       ┆ Philadelphia ┆ United States │
-│ 4545       ┆ New York     ┆ United States │
-│ 4506       ┆ Portland     ┆ United States │
-│ 4506       ┆ Sacramento   ┆ United States │
-└────────────┴──────────────┴───────────────┘
+┌────────────┬─────────────┬────────────────┐
+│ numPersons ┆ city        ┆ country        │
+│ ---        ┆ ---         ┆ ---            │
+│ i64        ┆ str         ┆ str            │
+╞════════════╪═════════════╪════════════════╡
+│ 77         ┆ Birmingham  ┆ United Kingdom │
+│ 67         ┆ Kansas City ┆ United States  │
+│ 67         ┆ Charlotte   ┆ United States  │
+│ 65         ┆ Portland    ┆ United States  │
+│ 65         ┆ Montreal    ┆ Canada         │
+└────────────┴─────────────┴────────────────┘
 
 Query 7:
  
         MATCH (p:Person)-[:LIVES_IN]->(:City)-[:CITY_IN]->(s:State)
         MATCH (p)-[:HAS_INTEREST]->(i:Interest)
         WHERE p.age >= $age_lower AND p.age <= $age_upper AND s.country = $country
-        AND lower(i.interest) = lower($interest)
+        AND i.interest = $interest
         RETURN count(p.id) AS numpersons, s.state AS state, s.country AS country
         ORDER BY numpersons DESC LIMIT 1
     
 
-        State in United States with the most users between ages 23-30 who have an interest in photography:
+        State in United States with the most users between ages 23-30 who have an interest in Photography:
 shape: (1, 3)
-┌────────────┬──────────┬───────────────┐
-│ numPersons ┆ state    ┆ country       │
-│ ---        ┆ ---      ┆ ---           │
-│ i64        ┆ str      ┆ str           │
-╞════════════╪══════════╪═══════════════╡
-│ 5074       ┆ New York ┆ United States │
-└────────────┴──────────┴───────────────┘
+┌────────────┬────────────┬───────────────┐
+│ numPersons ┆ state      ┆ country       │
+│ ---        ┆ ---        ┆ ---           │
+│ i64        ┆ str        ┆ str           │
+╞════════════╪════════════╪═══════════════╡
+│ 130        ┆ California ┆ United States │
+└────────────┴────────────┴───────────────┘
         
 
 Query 8:
@@ -206,42 +206,44 @@ shape: (1, 1)
 │ ---      │
 │ i64      │
 ╞══════════╡
-│ 45344112 │
+│ 45343391 │
 └──────────┘
+        
+Queries completed in 0.4013s
 ```
 
 ## Query performance
 
 ```
 ❯ uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-iterations=5 --benchmark-disable-gc --benchmark-sort=fullname
-============================== test session starts ==============================
+========================== test session starts ==========================
 platform darwin -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0
 benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=True min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=5)
 rootdir: /Users/prrao/code/graph-benchmark
 configfile: pyproject.toml
 plugins: anyio-4.12.1, benchmark-5.2.3, asyncio-1.3.0, Faker-40.1.2
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 9 items                                                               
+collected 9 items                                                       
 
-benchmark_query.py .........                                              [100%]
+benchmark_query.py .........                                      [100%]
 
 
--------------------------------------------------------------------------------------- benchmark: 9 tests -------------------------------------------------------------------------------------
-Name (time in ms)              Min                 Max                Mean            StdDev              Median                IQR            Outliers       OPS            Rounds  Iterations
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-test_benchmark_query1      26.9350 (4.12)      31.9142 (4.23)      29.1461 (4.15)     1.5569 (8.52)      29.0399 (4.16)      1.9710 (8.05)          2;0   34.3099 (0.24)          8           1
-test_benchmark_query2      60.0053 (9.18)      92.5294 (12.26)     71.2966 (10.16)    8.9412 (48.96)     72.3725 (10.37)    14.9065 (60.91)         6;0   14.0259 (0.10)         17           1
-test_benchmark_query3       9.0629 (1.39)      10.2294 (1.35)       9.6246 (1.37)     0.2704 (1.48)       9.5786 (1.37)      0.3521 (1.44)         16;0  103.9005 (0.73)         59           1
-test_benchmark_query4       6.5372 (1.0)        7.5498 (1.0)        7.0198 (1.0)      0.1826 (1.0)        6.9807 (1.0)       0.2448 (1.0)          27;2  142.4546 (1.0)         110           1
-test_benchmark_query5       7.6128 (1.16)       8.8082 (1.17)       8.0441 (1.15)     0.2708 (1.48)       8.0123 (1.15)      0.4007 (1.64)         33;0  124.3146 (0.87)        101           1
-test_benchmark_query6      10.0817 (1.54)      11.7397 (1.55)      10.7463 (1.53)     0.3963 (2.17)      10.6860 (1.53)      0.5477 (2.24)         30;0   93.0550 (0.65)         89           1
-test_benchmark_query7       8.9319 (1.37)       9.8633 (1.31)       9.3121 (1.33)     0.1926 (1.05)       9.2992 (1.33)      0.2957 (1.21)         37;0  107.3873 (0.75)        102           1
-test_benchmark_query8     169.3261 (25.90)    189.0392 (25.04)    173.0360 (24.65)    7.8601 (43.04)    169.8045 (24.32)     1.3944 (5.70)          1;1    5.7791 (0.04)          6           1
-test_benchmark_query9     146.1878 (22.36)    153.4628 (20.33)    150.5118 (21.44)    2.3057 (12.62)    151.1071 (21.65)     2.1810 (8.91)          2;1    6.6440 (0.05)          7           1
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------- benchmark: 9 tests -------------------------------------------------------------------------------------
+Name (time in ms)              Min                 Max                Mean            StdDev              Median               IQR            Outliers       OPS            Rounds  Iterations
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+test_benchmark_query1      20.6354 (4.85)      25.6317 (4.55)      22.2333 (4.81)     1.2217 (6.93)      21.9964 (4.80)     1.4978 (6.72)          6;2   44.9776 (0.21)         33           1
+test_benchmark_query2      41.4012 (9.73)      51.8032 (9.20)      45.2330 (9.79)     2.8306 (16.06)     44.8203 (9.78)     3.7309 (16.73)         8;0   22.1077 (0.10)         20           1
+test_benchmark_query3       6.4170 (1.51)       7.9923 (1.42)       6.8688 (1.49)     0.2365 (1.34)       6.8342 (1.49)     0.2836 (1.27)         31;3  145.5860 (0.67)        131           1
+test_benchmark_query4       4.4555 (1.05)       5.8523 (1.04)       4.8983 (1.06)     0.2561 (1.45)       4.8509 (1.06)     0.3373 (1.51)         61;4  204.1510 (0.94)        185           1
+test_benchmark_query5       4.2564 (1.0)        5.6318 (1.0)        4.6197 (1.0)      0.2092 (1.19)       4.5850 (1.0)      0.2615 (1.17)         48;5  216.4630 (1.0)         221           1
+test_benchmark_query6       4.8089 (1.13)       5.9086 (1.05)       5.3321 (1.15)     0.1799 (1.02)       5.3154 (1.16)     0.2409 (1.08)         55;4  187.5428 (0.87)        186           1
+test_benchmark_query7       6.1270 (1.44)       6.8842 (1.22)       6.4687 (1.40)     0.1763 (1.0)        6.4630 (1.41)     0.2230 (1.0)          50;0  154.5906 (0.71)        155           1
+test_benchmark_query8     128.0999 (30.10)    137.7457 (24.46)    132.2697 (28.63)    3.3987 (19.28)    132.6173 (28.92)    5.3804 (24.13)         3;0    7.5603 (0.03)          8           1
+test_benchmark_query9     114.3414 (26.86)    120.1265 (21.33)    117.2609 (25.38)    1.6865 (9.57)     117.1174 (25.54)    1.5854 (7.11)          3;0    8.5280 (0.04)          9           1
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Legend:
   Outliers: 1 Standard Deviation from Mean; 1.5 IQR (InterQuartile Range) from 1st Quartile and 3rd Quartile.
   OPS: Operations Per Second, computed as 1 / Mean
-============================== 9 passed in 10.78s ===============================
+========================== 9 passed in 10.82s ===========================
 ```

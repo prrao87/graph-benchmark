@@ -161,8 +161,8 @@ def run_query5(
     query = """
         MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest)
         MATCH (p)-[:LIVES_IN]->(c:City)
-        WHERE lower(i.interest) = lower($interest)
-        AND lower(p.gender) = lower($gender)
+        WHERE i.interest = $interest
+        AND p.gender = $gender
         AND c.city = $city AND c.country = $country
         RETURN count(p) AS numpersons
     """
@@ -182,8 +182,8 @@ def run_query6(
     query = """
         MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest)
         MATCH (p)-[:LIVES_IN]->(c:City)
-        WHERE lower(i.interest) = lower($interest)
-        AND lower(p.gender) = lower($gender)
+        WHERE i.interest = $interest
+        AND p.gender = $gender
         RETURN count(p.id) AS numpersons, c.city AS city, c.country AS country
         ORDER BY numpersons DESC LIMIT 5
     """
@@ -204,7 +204,7 @@ def run_query7(
         MATCH (p:Person)-[:LIVES_IN]->(:City)-[:CITY_IN]->(s:State)
         MATCH (p)-[:HAS_INTEREST]->(i:Interest)
         WHERE p.age >= $age_lower AND p.age <= $age_upper AND s.country = $country
-        AND lower(i.interest) = lower($interest)
+        AND i.interest = $interest
         RETURN count(p.id) AS numpersons, s.state AS state, s.country AS country
         ORDER BY numpersons DESC LIMIT 1
     """
@@ -272,10 +272,10 @@ def main() -> None:
             "gender": "male",
             "city": "London",
             "country": "United Kingdom",
-            "interest": "fine dining",
+            "interest": "Fine Dining",
         },
     )
-    _ = run_query6(cfg, datasets, params={"gender": "female", "interest": "tennis"})
+    _ = run_query6(cfg, datasets, params={"gender": "female", "interest": "Tennis"})
     _ = run_query7(
         cfg,
         datasets,
@@ -283,7 +283,7 @@ def main() -> None:
             "country": "United States",
             "age_lower": 23,
             "age_upper": 30,
-            "interest": "photography",
+            "interest": "Photography",
         },
     )
     _ = run_query8(cfg, datasets)

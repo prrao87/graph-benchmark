@@ -76,15 +76,15 @@ Query 1:
     
 Top 3 most-followed persons:
 shape: (3, 3)
-┌──────────┬───────────────────┬──────────────┐
-│ personID ┆ name              ┆ numFollowers │
-│ ---      ┆ ---               ┆ ---          │
-│ i64      ┆ str               ┆ i64          │
-╞══════════╪═══════════════════╪══════════════╡
-│ 85723    ┆ Melissa Murphy    ┆ 4998         │
-│ 68753    ┆ Jocelyn Patterson ┆ 4985         │
-│ 54696    ┆ Michael Herring   ┆ 4976         │
-└──────────┴───────────────────┴──────────────┘
+┌──────────┬─────────────────┬──────────────┐
+│ personID ┆ name            ┆ numFollowers │
+│ ---      ┆ ---             ┆ ---          │
+│ i64      ┆ str             ┆ i64          │
+╞══════════╪═════════════════╪══════════════╡
+│ 85723    ┆ Katherine Ewing ┆ 4998         │
+│ 68753    ┆ Devon Pineda    ┆ 4985         │
+│ 54696    ┆ Dakota Lawrence ┆ 4976         │
+└──────────┴─────────────────┴──────────────┘
 
 Query 2:
  
@@ -96,13 +96,13 @@ Query 2:
     
 City in which most-followed person lives:
 shape: (1, 5)
-┌────────────────┬──────────────┬────────┬───────┬───────────────┐
-│ name           ┆ numFollowers ┆ city   ┆ state ┆ country       │
-│ ---            ┆ ---          ┆ ---    ┆ ---   ┆ ---           │
-│ str            ┆ i64          ┆ str    ┆ str   ┆ str           │
-╞════════════════╪══════════════╪════════╪═══════╪═══════════════╡
-│ Melissa Murphy ┆ 4998         ┆ Austin ┆ Texas ┆ United States │
-└────────────────┴──────────────┴────────┴───────┴───────────────┘
+┌─────────────────┬──────────────┬────────┬───────┬───────────────┐
+│ name            ┆ numFollowers ┆ city   ┆ state ┆ country       │
+│ ---             ┆ ---          ┆ ---    ┆ ---   ┆ ---           │
+│ str             ┆ i64          ┆ str    ┆ str   ┆ str           │
+╞═════════════════╪══════════════╪════════╪═══════╪═══════════════╡
+│ Katherine Ewing ┆ 4998         ┆ Austin ┆ Texas ┆ United States │
+└─────────────────┴──────────────┴────────┴───────┴───────────────┘
 
 Query 3:
  
@@ -118,11 +118,11 @@ shape: (5, 2)
 │ ---         ┆ ---        │
 │ str         ┆ f64        │
 ╞═════════════╪════════════╡
-│ Austin      ┆ 38.780347  │
-│ Kansas City ┆ 38.885064  │
-│ Miami       ┆ 38.903869  │
-│ San Antonio ┆ 38.950311  │
-│ Houston     ┆ 38.953125  │
+│ Seattle     ┆ 39.65897   │
+│ Dallas      ┆ 39.72201   │
+│ Austin      ┆ 39.772832  │
+│ Kansas City ┆ 39.774014  │
+│ Miami       ┆ 39.775695  │
 └─────────────┴────────────┘
 
 Query 4:
@@ -139,9 +139,9 @@ shape: (3, 2)
 │ ---            ┆ ---          │
 │ str            ┆ i64          │
 ╞════════════════╪══════════════╡
-│ United States  ┆ 30680        │
-│ Canada         ┆ 3045         │
-│ United Kingdom ┆ 1801         │
+│ United States  ┆ 30713        │
+│ Canada         ┆ 2989         │
+│ United Kingdom ┆ 1843         │
 └────────────────┴──────────────┘
 
 Query 5:
@@ -161,7 +161,7 @@ shape: (1, 1)
 │ ---        │
 │ i64        │
 ╞════════════╡
-│ 52         │
+│ 48         │
 └────────────┘
 
 Query 6:
@@ -176,17 +176,17 @@ Query 6:
     
 Cities with the most female users who have an interest in tennis:
 shape: (5, 3)
-┌────────────┬────────────┬────────────────┐
-│ numPersons ┆ city       ┆ country        │
-│ ---        ┆ ---        ┆ ---            │
-│ i64        ┆ str        ┆ str            │
-╞════════════╪════════════╪════════════════╡
-│ 66         ┆ Houston    ┆ United States  │
-│ 66         ┆ Birmingham ┆ United Kingdom │
-│ 65         ┆ Raleigh    ┆ United States  │
-│ 64         ┆ Montreal   ┆ Canada         │
-│ 62         ┆ Phoenix    ┆ United States  │
-└────────────┴────────────┴────────────────┘
+┌────────────┬─────────────┬────────────────┐
+│ numPersons ┆ city        ┆ country        │
+│ ---        ┆ ---         ┆ ---            │
+│ i64        ┆ str         ┆ str            │
+╞════════════╪═════════════╪════════════════╡
+│ 77         ┆ Birmingham  ┆ United Kingdom │
+│ 67         ┆ Kansas City ┆ United States  │
+│ 67         ┆ Charlotte   ┆ United States  │
+│ 65         ┆ Portland    ┆ United States  │
+│ 65         ┆ Montreal    ┆ Canada         │
+└────────────┴─────────────┴────────────────┘
 
 Query 7:
  
@@ -206,7 +206,7 @@ shape: (1, 3)
 │ ---        ┆ ---        ┆ ---           │
 │ i64        ┆ str        ┆ str           │
 ╞════════════╪════════════╪═══════════════╡
-│ 141        ┆ California ┆ United States │
+│ 130        ┆ California ┆ United States │
 └────────────┴────────────┴───────────────┘
         
 
@@ -241,10 +241,10 @@ shape: (1, 1)
 │ ---      │
 │ i64      │
 ╞══════════╡
-│ 45578816 │
+│ 45343391 │
 └──────────┘
         
-Neo4j query script completed in 9.590890s
+Neo4j query script completed in 9.053326s
 ```
 
 ### Query performance benchmark
@@ -253,34 +253,34 @@ The benchmark is run using `pytest-benchmark` package as follows.
 
 ```sh
 $ uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-iterations=5 --benchmark-disable-gc --benchmark-sort=fullname
-==================================== test session starts =====================================
+=========================== test session starts ===========================
 platform darwin -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0
 benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=True min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=5)
 rootdir: /Users/prrao/code/graph-benchmark
 configfile: pyproject.toml
 plugins: anyio-4.12.1, benchmark-5.2.3, asyncio-1.3.0, Faker-40.1.2
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 9 items                                                                            
+collected 9 items                                                         
 
-benchmark_query.py .........                                                           [100%]
+benchmark_query.py .........                                        [100%]
 
 
 --------------------------------------------------------------------------------- benchmark: 9 tests ---------------------------------------------------------------------------------
 Name (time in s)             Min               Max              Mean            StdDev            Median               IQR            Outliers       OPS            Rounds  Iterations
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-test_benchmark_query1     1.6191 (232.32)   1.7303 (134.06)   1.6764 (194.65)   0.0463 (66.73)    1.6972 (204.32)   0.0729 (117.33)        2;0    0.5965 (0.01)          5           1
-test_benchmark_query2     0.4390 (62.99)    0.4650 (36.03)    0.4479 (52.01)    0.0100 (14.44)    0.4458 (53.67)    0.0094 (15.15)         1;0    2.2324 (0.02)          5           1
-test_benchmark_query3     0.0364 (5.22)     0.0449 (3.48)     0.0390 (4.53)     0.0029 (4.19)     0.0380 (4.57)     0.0027 (4.31)          1;1   25.6487 (0.22)          7           1
-test_benchmark_query4     0.0353 (5.07)     0.0428 (3.31)     0.0387 (4.49)     0.0022 (3.15)     0.0387 (4.66)     0.0024 (3.84)          4;0   25.8466 (0.22)         11           1
-test_benchmark_query5     0.0070 (1.0)      0.0129 (1.0)      0.0086 (1.0)      0.0015 (2.11)     0.0083 (1.0)      0.0016 (2.54)          5;1  116.1135 (1.0)          18           1
-test_benchmark_query6     0.0192 (2.75)     0.0276 (2.14)     0.0218 (2.53)     0.0023 (3.35)     0.0214 (2.58)     0.0031 (5.07)          5;0   45.8538 (0.39)         17           1
-test_benchmark_query7     0.1201 (17.23)    0.1221 (9.46)     0.1208 (14.03)    0.0007 (1.0)      0.1207 (14.54)    0.0006 (1.0)           2;1    8.2757 (0.07)          6           1
-test_benchmark_query8     2.8604 (410.44)   2.9741 (230.43)   2.9159 (338.57)   0.0439 (63.23)    2.9166 (351.13)   0.0656 (105.56)        2;0    0.3429 (0.00)          5           1
-test_benchmark_query9     3.2240 (462.62)   3.2548 (252.19)   3.2347 (375.59)   0.0132 (19.02)    3.2282 (388.64)   0.0198 (31.94)         1;0    0.3092 (0.00)          5           1
+test_benchmark_query1     1.5546 (281.31)   1.7013 (147.82)   1.6158 (240.11)   0.0599 (62.78)    1.6031 (246.51)   0.0952 (145.78)        2;0    0.6189 (0.00)          5           1
+test_benchmark_query2     0.3849 (69.65)    0.3972 (34.51)    0.3904 (58.01)    0.0045 (4.77)     0.3907 (60.07)    0.0054 (8.21)          2;0    2.5615 (0.02)          5           1
+test_benchmark_query3     0.0308 (5.57)     0.0489 (4.25)     0.0344 (5.11)     0.0049 (5.09)     0.0326 (5.02)     0.0022 (3.30)          3;3   29.0595 (0.20)         19           1
+test_benchmark_query4     0.0335 (6.07)     0.0446 (3.87)     0.0369 (5.48)     0.0029 (3.00)     0.0358 (5.50)     0.0027 (4.12)          5;2   27.1346 (0.18)         23           1
+test_benchmark_query5     0.0055 (1.0)      0.0115 (1.0)      0.0067 (1.0)      0.0010 (1.0)      0.0065 (1.0)      0.0007 (1.0)          13;7  148.6023 (1.0)          90           1
+test_benchmark_query6     0.0150 (2.71)     0.0229 (1.99)     0.0179 (2.66)     0.0017 (1.82)     0.0177 (2.72)     0.0024 (3.74)         18;0   55.8948 (0.38)         46           1
+test_benchmark_query7     0.1136 (20.55)    0.1201 (10.43)    0.1162 (17.27)    0.0027 (2.80)     0.1146 (17.62)    0.0047 (7.15)          2;0    8.6058 (0.06)          9           1
+test_benchmark_query8     2.9622 (536.02)   3.0920 (268.65)   3.0117 (447.54)   0.0496 (52.04)    3.0087 (462.66)   0.0575 (87.95)         1;0    0.3320 (0.00)          5           1
+test_benchmark_query9     3.0849 (558.21)   3.1731 (275.69)   3.1241 (464.25)   0.0335 (35.16)    3.1153 (479.05)   0.0453 (69.28)         2;0    0.3201 (0.00)          5           1
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Legend:
   Outliers: 1 Standard Deviation from Mean; 1.5 IQR (InterQuartile Range) from 1st Quartile and 3rd Quartile.
   OPS: Operations Per Second, computed as 1 / Mean
-================================ 9 passed in 62.50s (0:01:02) ================================
+====================== 9 passed in 62.49s (0:01:02) =======================
 ```
