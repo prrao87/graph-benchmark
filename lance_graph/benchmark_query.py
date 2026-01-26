@@ -65,7 +65,7 @@ def test_benchmark_query5(benchmark, graph_context):
             "gender": "male",
             "city": "London",
             "country": "United Kingdom",
-            "interest": "fine dining",
+            "interest": "Fine Dining",
         },
     )
     result = result.to_dicts()
@@ -81,7 +81,7 @@ def test_benchmark_query6(benchmark, graph_context):
         datasets,
         {
             "gender": "female",
-            "interest": "tennis",
+            "interest": "Tennis",
         },
     )
     result = result.to_dicts()
@@ -99,7 +99,7 @@ def test_benchmark_query7(benchmark, graph_context):
             "country": "United States",
             "age_lower": 23,
             "age_upper": 30,
-            "interest": "photography",
+            "interest": "Photography",
         },
     )
     result = result.to_dicts()
