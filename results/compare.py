@@ -127,9 +127,11 @@ def main() -> None:
     if not files:
         raise SystemExit("No .txt files found in results directory.")
 
+    neo4j_system: str | None = None
     for idx, path in enumerate(files):
         if "neo4j" in path.stem:
             files.insert(0, files.pop(idx))
+            neo4j_system = path.stem
             break
 
     systems = [path.stem for path in files]
@@ -146,7 +148,11 @@ def main() -> None:
     for query in all_queries:
         display_query = query.replace("test_benchmark_query", "q")
         row = [display_query]
-        neo4j_value = system_results.get("neo4j", {}).get(query)
+        neo4j_value = (
+            system_results.get(neo4j_system, {}).get(query)
+            if neo4j_system
+            else None
+        )
         series: list[float | None] = []
         for system in systems:
             value = system_results[system].get(query)
@@ -156,7 +162,8 @@ def main() -> None:
                 continue
             value_text = f"{format(value, f'.{ROUND_MS_DECIMALS}f')}ms"
             if (
-                system != "neo4j"
+                neo4j_system
+                and system != neo4j_system
                 and neo4j_value is not None
                 and neo4j_value > 0
                 and value > 0

@@ -98,7 +98,7 @@ The following questions are asked of both graphs:
 
 ## High-level results
 
-| Query | neo4j 2025.12.1 (ms) | kuzu 0.11.3 (ms) | ladybug (ms) | lance-graph 0.4.0 (ms) |
+| Query | neo4j-2025.12.1 (ms) | kuzu-0.11.3 (ms) | ladybug-0.14.1 (ms) | lance-graph-0.4.0 (ms) |
 | --- | --- | --- | --- | --- |
 | q1 | 1552ms | 138ms (11.2x) | 135ms (11.5x) | 22ms (69.8x) |
 | q2 | 395ms | 228ms (1.7x) | 215ms (1.8x) | 45ms (8.7x) |
