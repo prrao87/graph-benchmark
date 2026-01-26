@@ -16,6 +16,10 @@ ROUND_MS_DECIMALS = 0
 SPEEDUP_DECIMALS = 1
 
 
+def normalize_name(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
 def parse_benchmark_file(path: Path) -> dict[str, float]:
     unit: str | None = None
     unit_scale: float | None = None
@@ -60,6 +64,15 @@ def to_markdown_table(headers: list[str], rows: list[list[str]]) -> str:
     return "\n".join(lines)
 
 
+def resolve_color(system: str, color_map: dict[str, str]) -> str | None:
+    normalized_system = normalize_name(system)
+    normalized_map = {normalize_name(key): value for key, value in color_map.items()}
+    for key in sorted(normalized_map, key=len, reverse=True):
+        if key in normalized_system:
+            return normalized_map[key]
+    return None
+
+
 def plot_results(
     systems: list[str],
     queries: list[str],
@@ -94,7 +107,7 @@ def plot_results(
             series,
             width=bar_width,
             label=system,
-            color=color_map.get(system),
+            color=resolve_color(system, color_map),
         )
 
     plt.xticks(x, queries, rotation=45, ha="right")
@@ -114,10 +127,12 @@ def main() -> None:
     if not files:
         raise SystemExit("No .txt files found in results directory.")
 
-    systems = sorted(path.stem for path in files)
-    if "neo4j" in systems:
-        systems.remove("neo4j")
-        systems.insert(0, "neo4j")
+    for idx, path in enumerate(files):
+        if "neo4j" in path.stem:
+            files.insert(0, files.pop(idx))
+            break
+
+    systems = [path.stem for path in files]
     system_results = {path.stem: parse_benchmark_file(path) for path in files}
     all_queries = sorted(
         {query for results in system_results.values() for query in results},
