@@ -22,13 +22,24 @@ uv sync
 ```
 All the dependencies are listed in `pyproject.toml`.
 
-## Data
+## Dataset
 
 An artificial social network dataset is generated specifically for this exercise, via the [Faker](https://faker.readthedocs.io/en/master/) Python library.
 
-### Generate dataset
+### Graph schema
 
-We'll create an artificial dataset of 100K person profiles, and their associated 
+We'll create an artificial social network dataset of 100K person profiles, and their associated connections per the following schema.
+
+![](./assets/graph-schema.png)
+
+The schema describes the following nodes and relationships, along with properties on each node:
+* `Person` node `FOLLOWS` another `Person` node
+* `Person` node `LIVES_IN` a `City` node
+* `Person` node `HAS_INTEREST` towards an `Interest` node
+* `City` node is `CITY_IN` a `State` node
+* `State` node is `STATE_IN` a `Country` node
+
+### Generate dataset
 
 A shell script `generate_data.sh` is provided in the root directory of this repo that sequentially runs the Python scripts, generating the data for the nodes and edges for the social network. This is the recommended way to generate the data. A single positional argument is provided to the shell script: The number of person profiles to generate -- this is specified as an integer, as shown below.
 
@@ -58,19 +69,7 @@ Wrote 273 edges for 273 states
 
 We are now ready with the benchmark dataset in Parquet format!
 
-## Graph schema
-
-The following graph schema is used for the social network dataset.
-
-![](./assets/graph-schema.png)
-
-* `Person` node `FOLLOWS` another `Person` node
-* `Person` node `LIVES_IN` a `City` node
-* `Person` node `HAS_INTEREST` towards an `Interest` node
-* `City` node is `CITY_IN` a `State` node
-* `State` node is `STATE_IN` a `Country` node
-
-## Ingest the data
+## Ingest the data as a graph
 
 Navigate to the individual directories to see the instructions on how to ingest the data into each graph system.
 
