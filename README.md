@@ -69,6 +69,9 @@ Wrote 273 edges for 273 states
 
 We are now ready with the benchmark dataset in Parquet format!
 
+> [!NOTE]
+> Due to minor differences in RNG across systems, the exact dataset reproduced on your end may be different than the one used for this benchmark. So exact numbers in the query results may not align across runs when the dataset is regenerated, but the larger trends will remain the same, no matter where this is run.
+
 ## Ingest the data as a graph
 
 Navigate to the individual directories to see the instructions on how to ingest the data into each graph system.
@@ -97,15 +100,15 @@ The following questions are asked of both graphs:
 
 | Query | neo4j (ms) | kuzu (ms) | ladybug (ms) | lance-graph (ms) |
 | --- | --- | --- | --- | --- |
-| q1 | 1676ms | 140ms (12.0x) | 142ms (11.8x) | 31ms (54.7x) |
-| q2 | 448ms | 213ms (2.1x) | 217ms (2.1x) | 73ms (6.1x) |
-| q3 | 39ms | 6ms (6.1x) | 7ms (5.7x) | 10ms (4.1x) |
-| q4 | 39ms | 10ms (4.0x) | 10ms (3.9x) | 7ms (5.6x) |
-| q5 | 9ms | 11ms (0.8x) | 11ms (0.8x) | 8ms (1.1x) |
-| q6 | 22ms | 27ms (0.8x) | 28ms (0.8x) | 10ms (2.1x) |
-| q7 | 121ms | 11ms (10.9x) | 12ms (10.4x) | 9ms (13.1x) |
-| q8 | 2916ms | 6ms (453.9x) | 7ms (445.2x) | 177ms (16.5x) |
-| q9 | 3235ms | 86ms (37.7x) | 87ms (37.4x) | 157ms (20.6x) |
+| q1 | 1616ms | 138ms (11.7x) | 135ms (12.0x) | 22ms (72.7x) |
+| q2 | 390ms | 228ms (1.7x) | 215ms (1.8x) | 45ms (8.6x) |
+| q3 | 34ms | 6ms (5.4x) | 6ms (5.3x) | 7ms (5.0x) |
+| q4 | 37ms | 10ms (3.8x) | 10ms (3.8x) | 5ms (7.5x) |
+| q5 | 7ms | 11ms (0.6x) | 11ms (0.6x) | 5ms (1.5x) |
+| q6 | 18ms | 27ms (0.7x) | 27ms (0.7x) | 5ms (3.4x) |
+| q7 | 116ms | 11ms (10.4x) | 11ms (10.1x) | 6ms (18.0x) |
+| q8 | 3012ms | 7ms (463.0x) | 7ms (455.8x) | 132ms (22.8x) |
+| q9 | 3124ms | 86ms (36.3x) | 88ms (35.6x) | 117ms (26.6x) |
 
 ![](./results/benchmark_plot.png)
 
