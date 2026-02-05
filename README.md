@@ -109,7 +109,6 @@ The following questions are asked of both graphs:
 | q7 | 117ms | 11ms (10.5x) | 11ms (10.2x) | 4ms (27.1x) |
 | q8 | 2831ms | 7ms (435.3x) | 7ms (428.5x) | 124ms (22.9x) |
 | q9 | 2987ms | 86ms (34.7x) | 88ms (34.1x) | 117ms (25.5x) |
-Wrote plot to /Users/prrao/code/graph-benchmark/results/benchmark_plot.png
 
 ![](./results/benchmark_plot.png)
 
