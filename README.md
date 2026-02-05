@@ -100,15 +100,15 @@ The following questions are asked of both graphs:
 
 | Query | neo4j-2025.12.1 (ms) | kuzu-0.11.3 (ms) | ladybug-0.14.1 (ms) | lance-graph-0.5.1 (ms) |
 | --- | --- | --- | --- | --- |
-| q1 | 1552ms | 138ms (11.2x) | 135ms (11.5x) | 19ms (80.0x) |
-| q2 | 395ms | 228ms (1.7x) | 215ms (1.8x) | 41ms (9.7x) |
-| q3 | 39ms | 6ms (6.1x) | 6ms (6.0x) | 5ms (8.3x) |
-| q4 | 38ms | 10ms (3.9x) | 10ms (3.9x) | 3ms (13.3x) |
+| q1 | 1552ms | 138ms (11.2x) | 135ms (11.5x) | 19ms (79.7x) |
+| q2 | 395ms | 228ms (1.7x) | 215ms (1.8x) | 41ms (9.8x) |
+| q3 | 39ms | 6ms (6.1x) | 6ms (6.0x) | 5ms (8.4x) |
+| q4 | 38ms | 10ms (3.9x) | 10ms (3.9x) | 3ms (13.4x) |
 | q5 | 8ms | 11ms (0.7x) | 11ms (0.7x) | 3ms (2.9x) |
 | q6 | 21ms | 27ms (0.8x) | 27ms (0.8x) | 3ms (6.4x) |
-| q7 | 117ms | 11ms (10.5x) | 11ms (10.2x) | 4ms (27.1x) |
-| q8 | 2831ms | 7ms (435.3x) | 7ms (428.5x) | 124ms (22.9x) |
-| q9 | 2987ms | 86ms (34.7x) | 88ms (34.1x) | 117ms (25.5x) |
+| q7 | 117ms | 11ms (10.5x) | 11ms (10.2x) | 4ms (26.9x) |
+| q8 | 2831ms | 7ms (435.3x) | 7ms (428.5x) | 130ms (21.8x) |
+| q9 | 2987ms | 86ms (34.7x) | 88ms (34.1x) | 126ms (23.7x) |
 
 ![](./results/benchmark_plot.png)
 
