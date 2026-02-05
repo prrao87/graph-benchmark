@@ -4,7 +4,15 @@ Run benchmark queries against Lance datasets.
 - Lance stores each node/edge label as a separate on-disk columnar dataset.
 - GraphConfig maps those datasets into a logical graph schema so Cypher
   queries can join across files.
-- Results are printed as Polars DataFrames to match the Ladybug output.
+- For multiple queries against the same datasets, we use CypherEngine to cache
+  the catalog (when available) for better performance.
+- Results are printed as Polars DataFrames to match the Kuzu/Ladybug output.
+
+This module is primarily benchmark/CLI glue. The CypherEngine caching here is
+identity-based (keys off the in-memory `cfg` and `datasets` objects) and uses a
+module-level cache that is intentionally not evicted. This matches the intended
+usage pattern (build `cfg`/`datasets` once, execute many queries), but it is not
+meant as a general-purpose cache for long-running processes.
 """
 
 import time
@@ -16,10 +24,29 @@ import polars as pl
 import pyarrow as pa
 from lance_graph import CypherQuery, GraphConfig
 
+try:
+    # Newer Lance Graph versions provide CypherEngine, which caches the catalog
+    # and avoids rebuilding it for every query.
+    from lance_graph import CypherEngine
+except ImportError:  # pragma: no cover
+    CypherEngine = None  # type: ignore[assignment]
+
 SCRIPT_ROOT = Path(__file__).resolve().parent
 GRAPH_ROOT = SCRIPT_ROOT / "graph_lance"
 NODE_LABELS = ("Person", "City", "State", "Country", "Interest")
 REL_TYPES = ("FOLLOWS", "LIVES_IN", "HAS_INTEREST", "CITY_IN", "STATE_IN")
+
+# Cache CypherEngine instances by object identity.
+#
+# Why identity-based?
+# - It's cheap and matches the benchmark usage pattern (single cfg/datasets per run).
+# - Content-based keys would require hashing/serializing Arrow tables or config,
+#   which is expensive and/or ambiguous.
+#
+# Limitations:
+# - Re-creating equivalent `cfg`/`datasets` objects will miss the cache.
+# - This dict is unbounded by design; don't rely on it in long-running services.
+ENGINE_CACHE: dict[tuple[int, int], Any] = {}
 
 
 def build_config() -> GraphConfig:
@@ -69,18 +96,50 @@ def apply_params(query: str, params: dict[str, Any]) -> str:
     return query
 
 
+def get_engine(cfg: GraphConfig, datasets: dict[str, pa.Table]) -> Any:
+    """Return a cached CypherEngine for (cfg, datasets).
+
+    Note: the cache key is `(id(cfg), id(datasets))`, so the engine is only
+    reused when the exact same objects are passed again.
+    """
+    if CypherEngine is None:
+        raise RuntimeError(
+            "CypherEngine is not available in this lance_graph version. "
+            "Upgrade lance-graph to use catalog caching."
+        )
+    cache_key = (id(cfg), id(datasets))
+    engine = ENGINE_CACHE.get(cache_key)
+    if engine is None:
+        engine = CypherEngine(cfg, datasets)
+        ENGINE_CACHE[cache_key] = engine
+    return engine
+
+
 def execute_query(
     query: str,
-    cfg: GraphConfig,
-    datasets: dict[str, pa.Table],
+    cfg: GraphConfig | None,
+    datasets: dict[str, pa.Table] | None,
     params: dict[str, Any] | None = None,
+    *,
+    engine: Any | None = None,
 ) -> pl.DataFrame:
     if params:
         # Inline params instead of using CypherQuery.with_parameter, which isn't
         # respected by the current parser.
         query = apply_params(query, params)
-    cypher = CypherQuery(query)
-    result = cypher.with_config(cfg).execute(datasets)
+
+    if engine is None and CypherEngine is not None:
+        if cfg is None or datasets is None:
+            raise TypeError("cfg and datasets are required when engine is not provided.")
+        engine = get_engine(cfg, datasets)
+
+    if engine is not None:
+        result = engine.execute(query)
+    else:
+        if cfg is None or datasets is None:
+            raise TypeError("cfg and datasets are required when engine is not provided.")
+        cypher = CypherQuery(query)
+        result = cypher.with_config(cfg).execute(datasets)
     return to_polars(result)
 
 
@@ -90,7 +149,9 @@ def rename_result(result: pl.DataFrame, mapping: dict[str, str]) -> pl.DataFrame
     return result.rename(mapping)
 
 
-def run_query1(cfg: GraphConfig, datasets: dict[str, pa.Table]) -> pl.DataFrame:
+def run_query1(
+    cfg: GraphConfig, datasets: dict[str, pa.Table], engine: Any | None = None
+) -> pl.DataFrame:
     "Who are the top 3 most-followed persons in the network?"
     query = """
         MATCH (follower:Person)-[:FOLLOWS]->(person:Person)
@@ -98,13 +159,15 @@ def run_query1(cfg: GraphConfig, datasets: dict[str, pa.Table]) -> pl.DataFrame:
         ORDER BY numfollowers DESC LIMIT 3
     """
     print(f"\nQuery 1:\n {query}")
-    result = execute_query(query, cfg, datasets)
+    result = execute_query(query, cfg, datasets, engine=engine)
     result = rename_result(result, {"personid": "personID", "numfollowers": "numFollowers"})
     print(f"Top 3 most-followed persons:\n{result}")
     return result
 
 
-def run_query2(cfg: GraphConfig, datasets: dict[str, pa.Table]) -> pl.DataFrame:
+def run_query2(
+    cfg: GraphConfig, datasets: dict[str, pa.Table], engine: Any | None = None
+) -> pl.DataFrame:
     "In which city does the most-followed person in the network live?"
     query = """
         MATCH (follower:Person)-[:FOLLOWS]->(person:Person)-[:LIVES_IN]->(city:City)
@@ -112,14 +175,17 @@ def run_query2(cfg: GraphConfig, datasets: dict[str, pa.Table]) -> pl.DataFrame:
         ORDER BY numfollowers DESC LIMIT 1
     """
     print(f"\nQuery 2:\n {query}")
-    result = execute_query(query, cfg, datasets)
+    result = execute_query(query, cfg, datasets, engine=engine)
     result = rename_result(result, {"numfollowers": "numFollowers"})
     print(f"City in which most-followed person lives:\n{result}")
     return result
 
 
 def run_query3(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
+    cfg: GraphConfig,
+    datasets: dict[str, pa.Table],
+    params: dict[str, Any],
+    engine: Any | None = None,
 ) -> pl.DataFrame:
     "Which 5 cities in a particular country have the lowest average age in the network?"
     query = """
@@ -129,14 +195,17 @@ def run_query3(
         ORDER BY averageage LIMIT 5
     """
     print(f"\nQuery 3:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
+    result = execute_query(query, cfg, datasets, params=params, engine=engine)
     result = rename_result(result, {"averageage": "averageAge"})
     print(f"Cities with lowest average age in {params['country']}:\n{result}")
     return result
 
 
 def run_query4(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
+    cfg: GraphConfig,
+    datasets: dict[str, pa.Table],
+    params: dict[str, Any],
+    engine: Any | None = None,
 ) -> pl.DataFrame:
     "How many persons between a certain age range are in each country?"
     query = """
@@ -146,7 +215,7 @@ def run_query4(
         ORDER BY personcounts DESC LIMIT 3
     """
     print(f"\nQuery 4:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
+    result = execute_query(query, cfg, datasets, params=params, engine=engine)
     result = rename_result(result, {"personcounts": "personCounts"})
     print(
         f"Persons between ages {params['age_lower']}-{params['age_upper']} in each country:\n{result}"
@@ -155,7 +224,10 @@ def run_query4(
 
 
 def run_query5(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
+    cfg: GraphConfig,
+    datasets: dict[str, pa.Table],
+    params: dict[str, Any],
+    engine: Any | None = None,
 ) -> pl.DataFrame:
     "How many men in a particular city have an interest in the same thing?"
     query = """
@@ -167,7 +239,7 @@ def run_query5(
         RETURN count(p) AS numpersons
     """
     print(f"\nQuery 5:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
+    result = execute_query(query, cfg, datasets, params=params, engine=engine)
     result = rename_result(result, {"numpersons": "numPersons"})
     print(
         f"Number of {params['gender']} users in {params['city']}, {params['country']} who have an interest in {params['interest']}:\n{result}"
@@ -176,7 +248,10 @@ def run_query5(
 
 
 def run_query6(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
+    cfg: GraphConfig,
+    datasets: dict[str, pa.Table],
+    params: dict[str, Any],
+    engine: Any | None = None,
 ) -> pl.DataFrame:
     "Which city has the maximum number of people of a particular gender that share a particular interest"
     query = """
@@ -188,7 +263,7 @@ def run_query6(
         ORDER BY numpersons DESC LIMIT 5
     """
     print(f"\nQuery 6:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
+    result = execute_query(query, cfg, datasets, params=params, engine=engine)
     result = rename_result(result, {"numpersons": "numPersons"})
     print(
         f"City with the most {params['gender']} users who have an interest in {params['interest']}:\n{result}"
@@ -197,7 +272,10 @@ def run_query6(
 
 
 def run_query7(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
+    cfg: GraphConfig,
+    datasets: dict[str, pa.Table],
+    params: dict[str, Any],
+    engine: Any | None = None,
 ) -> pl.DataFrame:
     "Which U.S. state has the maximum number of persons between a specified age who enjoy a particular interest?"
     query = """
@@ -209,7 +287,7 @@ def run_query7(
         ORDER BY numpersons DESC LIMIT 1
     """
     print(f"\nQuery 7:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
+    result = execute_query(query, cfg, datasets, params=params, engine=engine)
     result = rename_result(result, {"numpersons": "numPersons"})
     print(
         f"""
@@ -219,14 +297,16 @@ def run_query7(
     return result
 
 
-def run_query8(cfg: GraphConfig, datasets: dict[str, pa.Table]) -> pl.DataFrame:
+def run_query8(
+    cfg: GraphConfig, datasets: dict[str, pa.Table], engine: Any | None = None
+) -> pl.DataFrame:
     "How many second-degree paths exist in the graph?"
     query = """
         MATCH (a:Person)-[r1:FOLLOWS]->(b:Person)-[r2:FOLLOWS]->(c:Person)
         RETURN count(*) AS numpaths
     """
     print(f"\nQuery 8:\n {query}")
-    result = execute_query(query, cfg, datasets)
+    result = execute_query(query, cfg, datasets, engine=engine)
     result = rename_result(result, {"numpaths": "numPaths"})
     print(
         f"""
@@ -237,7 +317,10 @@ def run_query8(cfg: GraphConfig, datasets: dict[str, pa.Table]) -> pl.DataFrame:
 
 
 def run_query9(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
+    cfg: GraphConfig,
+    datasets: dict[str, pa.Table],
+    params: dict[str, Any],
+    engine: Any | None = None,
 ) -> pl.DataFrame:
     "How many paths exist in the graph through persons below a certain age to persons above a certain age?"
     query = """
@@ -247,7 +330,7 @@ def run_query9(
     """
 
     print(f"\nQuery 9:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
+    result = execute_query(query, cfg, datasets, params=params, engine=engine)
     result = rename_result(result, {"numpaths": "numPaths"})
     print(
         f"""
@@ -260,11 +343,15 @@ def run_query9(
 def main() -> None:
     cfg = build_config()
     datasets = load_datasets(GRAPH_ROOT)
+    engine = None
+    if CypherEngine is not None:
+        # Build catalog once so the benchmark timing focuses on query execution.
+        engine = get_engine(cfg, datasets)
     start = time.perf_counter()
-    _ = run_query1(cfg, datasets)
-    _ = run_query2(cfg, datasets)
-    _ = run_query3(cfg, datasets, params={"country": "United States"})
-    _ = run_query4(cfg, datasets, params={"age_lower": 30, "age_upper": 40})
+    _ = run_query1(cfg, datasets, engine=engine)
+    _ = run_query2(cfg, datasets, engine=engine)
+    _ = run_query3(cfg, datasets, params={"country": "United States"}, engine=engine)
+    _ = run_query4(cfg, datasets, params={"age_lower": 30, "age_upper": 40}, engine=engine)
     _ = run_query5(
         cfg,
         datasets,
@@ -274,8 +361,9 @@ def main() -> None:
             "country": "United Kingdom",
             "interest": "Fine Dining",
         },
+        engine=engine,
     )
-    _ = run_query6(cfg, datasets, params={"gender": "female", "interest": "Tennis"})
+    _ = run_query6(cfg, datasets, params={"gender": "female", "interest": "Tennis"}, engine=engine)
     _ = run_query7(
         cfg,
         datasets,
@@ -285,9 +373,10 @@ def main() -> None:
             "age_upper": 30,
             "interest": "Photography",
         },
+        engine=engine,
     )
-    _ = run_query8(cfg, datasets)
-    _ = run_query9(cfg, datasets, params={"age_1": 50, "age_2": 25})
+    _ = run_query8(cfg, datasets, engine=engine)
+    _ = run_query9(cfg, datasets, params={"age_1": 50, "age_2": 25}, engine=engine)
     elapsed = time.perf_counter() - start
     print(f"Queries completed in {elapsed:.4f}s")
 

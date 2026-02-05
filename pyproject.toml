@@ -7,7 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "faker>=40.1.2",
     "kuzu>=0.11.3",
-    "lance-graph>=0.4.0",
+    "lance-graph>=0.5.1",
     "matplotlib>=3.10.8",
     "neo4j>=6.1.0",
     "polars>=1.37.1",
