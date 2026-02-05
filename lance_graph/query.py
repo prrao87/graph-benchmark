@@ -128,7 +128,9 @@ def rename_result(result: pl.DataFrame, mapping: dict[str, str]) -> pl.DataFrame
     return result.rename(mapping)
 
 
-def run_query1(cfg: GraphConfig, datasets: dict[str, pa.Table], engine: Any | None = None) -> pl.DataFrame:
+def run_query1(
+    cfg: GraphConfig, datasets: dict[str, pa.Table], engine: Any | None = None
+) -> pl.DataFrame:
     "Who are the top 3 most-followed persons in the network?"
     query = """
         MATCH (follower:Person)-[:FOLLOWS]->(person:Person)
@@ -142,7 +144,9 @@ def run_query1(cfg: GraphConfig, datasets: dict[str, pa.Table], engine: Any | No
     return result
 
 
-def run_query2(cfg: GraphConfig, datasets: dict[str, pa.Table], engine: Any | None = None) -> pl.DataFrame:
+def run_query2(
+    cfg: GraphConfig, datasets: dict[str, pa.Table], engine: Any | None = None
+) -> pl.DataFrame:
     "In which city does the most-followed person in the network live?"
     query = """
         MATCH (follower:Person)-[:FOLLOWS]->(person:Person)-[:LIVES_IN]->(city:City)
@@ -272,7 +276,9 @@ def run_query7(
     return result
 
 
-def run_query8(cfg: GraphConfig, datasets: dict[str, pa.Table], engine: Any | None = None) -> pl.DataFrame:
+def run_query8(
+    cfg: GraphConfig, datasets: dict[str, pa.Table], engine: Any | None = None
+) -> pl.DataFrame:
     "How many second-degree paths exist in the graph?"
     query = """
         MATCH (a:Person)-[r1:FOLLOWS]->(b:Person)-[r2:FOLLOWS]->(c:Person)
