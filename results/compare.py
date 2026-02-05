@@ -118,7 +118,7 @@ def plot_results(
     plt.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=150)
-    print(f"Wrote plot to {output_path}")
+    print(f"\nWrote plot to {output_path}")
 
 
 def main() -> None:
