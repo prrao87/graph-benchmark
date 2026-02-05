@@ -91,6 +91,7 @@ def plot_results(
     color_map = {
         "ladybug": "#d62728",
         "lance-graph": "#7f3fbf",
+        "lance-graph-catalog-cache": "#64ae6c",
         "neo4j": "#1f77b4",
         "kuzu": "#ff7f0e",
     }
