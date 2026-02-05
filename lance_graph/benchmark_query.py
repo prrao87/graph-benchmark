@@ -5,6 +5,10 @@ Command used:
 ```
 uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-iterations=5 --benchmark-disable-gc --benchmark-sort=fullname
 ```
+
+Note: `query.get_engine()` uses an identity-based, module-level cache intended
+for short-lived benchmark runs (session-scoped fixture). It's not designed as a
+general-purpose cache for long-running processes.
 """
 
 from pathlib import Path

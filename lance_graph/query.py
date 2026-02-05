@@ -6,7 +6,13 @@ Run benchmark queries against Lance datasets.
   queries can join across files.
 - For multiple queries against the same datasets, we use CypherEngine to cache
   the catalog (when available) for better performance.
-- Results are printed as Polars DataFrames to match the Ladybug output.
+- Results are printed as Polars DataFrames to match the Kuzu/Ladybug output.
+
+This module is primarily benchmark/CLI glue. The CypherEngine caching here is
+identity-based (keys off the in-memory `cfg` and `datasets` objects) and uses a
+module-level cache that is intentionally not evicted. This matches the intended
+usage pattern (build `cfg`/`datasets` once, execute many queries), but it is not
+meant as a general-purpose cache for long-running processes.
 """
 
 import time
@@ -30,6 +36,16 @@ GRAPH_ROOT = SCRIPT_ROOT / "graph_lance"
 NODE_LABELS = ("Person", "City", "State", "Country", "Interest")
 REL_TYPES = ("FOLLOWS", "LIVES_IN", "HAS_INTEREST", "CITY_IN", "STATE_IN")
 
+# Cache CypherEngine instances by object identity.
+#
+# Why identity-based?
+# - It's cheap and matches the benchmark usage pattern (single cfg/datasets per run).
+# - Content-based keys would require hashing/serializing Arrow tables or config,
+#   which is expensive and/or ambiguous.
+#
+# Limitations:
+# - Re-creating equivalent `cfg`/`datasets` objects will miss the cache.
+# - This dict is unbounded by design; don't rely on it in long-running services.
 ENGINE_CACHE: dict[tuple[int, int], Any] = {}
 
 
@@ -81,6 +97,11 @@ def apply_params(query: str, params: dict[str, Any]) -> str:
 
 
 def get_engine(cfg: GraphConfig, datasets: dict[str, pa.Table]) -> Any:
+    """Return a cached CypherEngine for (cfg, datasets).
+
+    Note: the cache key is `(id(cfg), id(datasets))`, so the engine is only
+    reused when the exact same objects are passed again.
+    """
     if CypherEngine is None:
         raise RuntimeError(
             "CypherEngine is not available in this lance_graph version. "
