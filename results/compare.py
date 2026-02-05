@@ -12,7 +12,7 @@ UNIT_TO_MS = {
     "µs": 0.001,
     "ns": 0.000001,
 }
-ROUND_MS_DECIMALS = 0
+ROUND_MS_DECIMALS = 1
 SPEEDUP_DECIMALS = 1
 
 
