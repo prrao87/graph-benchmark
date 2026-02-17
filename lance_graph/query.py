@@ -170,8 +170,8 @@ def run_query5(
 ) -> pl.DataFrame:
     "How many men in a particular city have an interest in the same thing?"
     query = """
-        MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest)
-        MATCH (p)-[:LIVES_IN]->(c:City)
+        MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest),
+              (p)-[:LIVES_IN]->(c:City)
         WHERE i.interest = $interest
         AND p.gender = $gender
         AND c.city = $city AND c.country = $country
@@ -192,8 +192,8 @@ def run_query6(
 ) -> pl.DataFrame:
     "Which city has the maximum number of people of a particular gender that share a particular interest"
     query = """
-        MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest)
-        MATCH (p)-[:LIVES_IN]->(c:City)
+        MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest),
+              (p)-[:LIVES_IN]->(c:City)
         WHERE i.interest = $interest
         AND p.gender = $gender
         RETURN count(p.id) AS numpersons, c.city AS city, c.country AS country
@@ -214,8 +214,8 @@ def run_query7(
 ) -> pl.DataFrame:
     "Which U.S. state has the maximum number of persons between a specified age who enjoy a particular interest?"
     query = """
-        MATCH (p:Person)-[:LIVES_IN]->(:City)-[:CITY_IN]->(s:State)
-        MATCH (p)-[:HAS_INTEREST]->(i:Interest)
+        MATCH (p:Person)-[:LIVES_IN]->(:City)-[:CITY_IN]->(s:State),
+              (p)-[:HAS_INTEREST]->(i:Interest)
         WHERE p.age >= $age_lower AND p.age <= $age_upper AND s.country = $country
         AND i.interest = $interest
         RETURN count(p.id) AS numpersons, s.state AS state, s.country AS country
