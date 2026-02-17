@@ -172,8 +172,8 @@ def run_query5(
     query = """
         MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest),
               (p)-[:LIVES_IN]->(c:City)
-        WHERE i.interest = $interest
-        AND p.gender = $gender
+        WHERE tolower(i.interest) = tolower($interest)
+        AND tolower(p.gender) = tolower($gender)
         AND c.city = $city AND c.country = $country
         RETURN count(p) AS numpersons
     """
@@ -194,8 +194,8 @@ def run_query6(
     query = """
         MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest),
               (p)-[:LIVES_IN]->(c:City)
-        WHERE i.interest = $interest
-        AND p.gender = $gender
+        WHERE tolower(i.interest) = tolower($interest)
+        AND tolower(p.gender) = tolower($gender)
         RETURN count(p.id) AS numpersons, c.city AS city, c.country AS country
         ORDER BY numpersons DESC LIMIT 5
     """
@@ -217,7 +217,7 @@ def run_query7(
         MATCH (p:Person)-[:LIVES_IN]->(:City)-[:CITY_IN]->(s:State),
               (p)-[:HAS_INTEREST]->(i:Interest)
         WHERE p.age >= $age_lower AND p.age <= $age_upper AND s.country = $country
-        AND i.interest = $interest
+        AND tolower(i.interest) = tolower($interest)
         RETURN count(p.id) AS numpersons, s.state AS state, s.country AS country
         ORDER BY numpersons DESC LIMIT 1
     """
@@ -276,17 +276,17 @@ def main() -> None:
             "gender": "male",
             "city": "London",
             "country": "United Kingdom",
-            "interest": "Fine Dining",
+            "interest": "fine dining",
         },
     )
-    _ = run_query6(engine, {"gender": "female", "interest": "Tennis"})
+    _ = run_query6(engine, {"gender": "female", "interest": "tennis"})
     _ = run_query7(
         engine,
         {
             "country": "United States",
             "age_lower": 23,
             "age_upper": 30,
-            "interest": "Photography",
+            "interest": "photography",
         },
     )
     _ = run_query8(engine)
