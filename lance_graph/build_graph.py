@@ -7,6 +7,7 @@ one Lance dataset per label/relationship into `lance_graph/graph_lance`.
 """
 
 from pathlib import Path
+import time
 
 import lance
 import pyarrow as pa
@@ -121,6 +122,8 @@ def load_edges(path: Path, src_type: pa.DataType, dst_type: pa.DataType) -> pa.T
 
 
 def main() -> None:
+    start = time.perf_counter()
+
     # ---- load nodes (capture the id type per label) ----
     persons, person_id_type = load_nodes(NODES_ROOT / "persons.parquet")
     cities, city_id_type = load_nodes(NODES_ROOT / "cities.parquet")
@@ -129,10 +132,15 @@ def main() -> None:
     interests, interest_id_type = load_nodes(NODES_ROOT / "interests.parquet")
 
     write_lance(persons, "Person")
+    print(f"Node table Person complete ({persons.num_rows:,} rows)")
     write_lance(cities, "City")
+    print(f"Node table City complete ({cities.num_rows:,} rows)")
     write_lance(states, "State")
+    print(f"Node table State complete ({states.num_rows:,} rows)")
     write_lance(countries, "Country")
+    print(f"Node table Country complete ({countries.num_rows:,} rows)")
     write_lance(interests, "Interest")
+    print(f"Node table Interest complete ({interests.num_rows:,} rows)")
 
     # ---- load edges (cast src/dst to referenced node id types) ----
     follows = load_edges(
@@ -162,12 +170,18 @@ def main() -> None:
     )
 
     write_lance(follows, "FOLLOWS")
+    print(f"Relationship table FOLLOWS complete ({follows.num_rows:,} rows)")
     write_lance(lives_in, "LIVES_IN")
+    print(f"Relationship table LIVES_IN complete ({lives_in.num_rows:,} rows)")
     write_lance(city_in, "CITY_IN")
+    print(f"Relationship table CITY_IN complete ({city_in.num_rows:,} rows)")
     write_lance(state_in, "STATE_IN")
+    print(f"Relationship table STATE_IN complete ({state_in.num_rows:,} rows)")
     write_lance(has_interest, "HAS_INTEREST")
+    print(f"Relationship table HAS_INTEREST complete ({has_interest.num_rows:,} rows)")
 
-    print(f"Wrote Lance datasets to: {GRAPH_ROOT.resolve()}")
+    elapsed = time.perf_counter() - start
+    print(f"Wrote Lance datasets to: {GRAPH_ROOT.resolve()}\nTime taken: {elapsed:.3f}s")
 
 
 if __name__ == "__main__":
