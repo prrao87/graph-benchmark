@@ -2,11 +2,14 @@ import asyncio
 import time
 from pathlib import Path
 
-import real_ladybug as lb
+import ladybug as lb
 
+SCRIPT_ROOT = Path(__file__).resolve().parent
 DATA_PATH = Path(__file__).resolve().parents[1] / "data"
 NODES_PATH = DATA_PATH / "output" / "nodes"
 EDGES_PATH = DATA_PATH / "output" / "edges"
+DB_NAME = "social_network.lbdb"
+DB_PATH = SCRIPT_ROOT / DB_NAME
 
 
 async def create_person_node_table(conn: lb.AsyncConnection) -> None:
@@ -124,12 +127,10 @@ async def main(conn: lb.AsyncConnection) -> None:
 
 
 if __name__ == "__main__":
-    DB_NAME = "social_network.lbdb"
     # Delete database file each time till we have MERGE FROM available in Ladybug
-    db_path = Path(f"./{DB_NAME}")
-    db_path.unlink(missing_ok=True)
+    DB_PATH.unlink(missing_ok=True)
     # Create database
-    db = lb.Database(DB_NAME)
+    db = lb.Database(str(DB_PATH))
     CONNECTION = lb.AsyncConnection(db)
 
     asyncio.run(main(CONNECTION))

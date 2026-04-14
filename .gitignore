@@ -136,6 +136,7 @@ test
 social_network.kuzu
 social_network.lbug
 social_network.lbdb
+ladybugdb/explorer.db
 data/output/nodes/*.parquet
 data/output/edges/*.parquet
 lance_graph/graph_lance/
