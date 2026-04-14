@@ -8,7 +8,7 @@ uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-ite
 ```
 """
 import pytest
-import real_ladybug as lb
+import ladybug as lb
 
 import query
 

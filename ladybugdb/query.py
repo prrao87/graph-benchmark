@@ -2,13 +2,17 @@
 Run a series of queries on an existing Ladybug database
 """
 import time
+from pathlib import Path
 from typing import Any
 
-import real_ladybug as lb
-from real_ladybug import Connection
+import ladybug as lb
+
+SCRIPT_ROOT = Path(__file__).resolve().parent
+DB_NAME = "social_network.lbdb"
+DB_PATH = SCRIPT_ROOT / DB_NAME
 
 
-def run_query1(conn: Connection) -> None:
+def run_query1(conn: lb.Connection) -> None:
     "Who are the top 3 most-followed persons in the network?"
     query = """
         MATCH (follower:Person)-[:Follows]->(person:Person)
@@ -22,7 +26,7 @@ def run_query1(conn: Connection) -> None:
     return result
 
 
-def run_query2(conn: Connection) -> None:
+def run_query2(conn: lb.Connection) -> None:
     "In which city does the most-followed person in the network live?"
     query = """
         MATCH (follower:Person)-[:Follows]->(person:Person)
@@ -38,7 +42,7 @@ def run_query2(conn: Connection) -> None:
     return result
 
 
-def run_query3(conn: Connection, params: list[tuple[str, Any]]) -> None:
+def run_query3(conn: lb.Connection, params: list[tuple[str, Any]]) -> None:
     "Which 5 cities in a particular country have the lowest average age in the network?"
     query = """
         MATCH (p:Person) -[:LivesIn]-> (c:City) -[*1..2]-> (co:Country)
@@ -53,7 +57,7 @@ def run_query3(conn: Connection, params: list[tuple[str, Any]]) -> None:
     return result
 
 
-def run_query4(conn: Connection, params: list[tuple[str, Any]]) -> None:
+def run_query4(conn: lb.Connection, params: list[tuple[str, Any]]) -> None:
     "How many persons between a certain age range are in each country?"
     query = """
         MATCH (p:Person)-[:LivesIn]->(ci:City)-[*1..2]->(country:Country)
@@ -68,7 +72,7 @@ def run_query4(conn: Connection, params: list[tuple[str, Any]]) -> None:
     return result
 
 
-def run_query5(conn: Connection, params: list[tuple[str, Any]]) -> None:
+def run_query5(conn: lb.Connection, params: list[tuple[str, Any]]) -> None:
     "How many men in a particular city have an interest in the same thing?"
     query = """
         MATCH (p:Person)-[:HasInterest]->(i:Interest)
@@ -88,7 +92,7 @@ def run_query5(conn: Connection, params: list[tuple[str, Any]]) -> None:
     return result
 
 
-def run_query6(conn: Connection, params: list[tuple[str, Any]]) -> None:
+def run_query6(conn: lb.Connection, params: list[tuple[str, Any]]) -> None:
     "Which city has the maximum number of people of a particular gender that share a particular interest"
     query = """
         MATCH (p:Person)-[:HasInterest]->(i:Interest)
@@ -108,7 +112,7 @@ def run_query6(conn: Connection, params: list[tuple[str, Any]]) -> None:
     return result
 
 
-def run_query7(conn: Connection, params: list[tuple[str, Any]]) -> None:
+def run_query7(conn: lb.Connection, params: list[tuple[str, Any]]) -> None:
     "Which U.S. state has the maximum number of persons between a specified age who enjoy a particular interest?"
     query = """
         MATCH (p:Person)-[:LivesIn]->(:City)-[:CityIn]->(s:State)
@@ -130,7 +134,7 @@ def run_query7(conn: Connection, params: list[tuple[str, Any]]) -> None:
     return result
 
 
-def run_query8(conn: Connection) -> None:
+def run_query8(conn: lb.Connection) -> None:
     "How many second-degree paths exist in the graph?"
     query = """
         MATCH (a:Person)-[r1:Follows]->(b:Person)-[r2:Follows]->(c:Person)
@@ -147,7 +151,7 @@ def run_query8(conn: Connection) -> None:
     return result
 
 
-def run_query9(conn: Connection, params: list[tuple[str, Any]]) -> None:
+def run_query9(conn: lb.Connection, params: list[tuple[str, Any]]) -> None:
     "How many paths exist in the graph through persons below a certain age to persons above a certain age?"
     query = """
         MATCH (a:Person)-[r1:Follows]->(b:Person)-[r2:Follows]->(c:Person)
@@ -166,7 +170,7 @@ def run_query9(conn: Connection, params: list[tuple[str, Any]]) -> None:
     return result
 
 
-def main(conn: Connection) -> None:
+def main(conn: lb.Connection) -> None:
     start = time.perf_counter()
     _ = run_query1(conn)
     _ = run_query2(conn)
@@ -198,8 +202,14 @@ def main(conn: Connection) -> None:
 
 
 if __name__ == "__main__":
-    DB_NAME = "social_network.lbdb"
-    db = lb.Database(f"./{DB_NAME}")
+    try:
+        db = lb.Database(str(DB_PATH))
+    except (MemoryError, RuntimeError) as exc:
+        raise RuntimeError(
+            f"Unable to open Ladybug database at {DB_PATH}. "
+            "If this database was created with an older Ladybug/real_ladybug build, "
+            "recreate it with `uv run build_graph.py` from the `ladybugdb` directory."
+        ) from exc
     CONNECTION = lb.Connection(db)
 
     main(CONNECTION)
