@@ -2,22 +2,29 @@
 
 This module is intentionally simple:
 - Build `GraphConfig` + load datasets once.
-- Create a single `CypherEngine` and reuse it across queries.
+- Reuse a lightweight query context across benchmark queries.
 """
 
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import lance
 import polars as pl
 import pyarrow as pa
-from lance_graph import CypherEngine, GraphConfig
+from lance_graph import CypherQuery, GraphConfig
 
 SCRIPT_ROOT = Path(__file__).resolve().parent
 GRAPH_ROOT = SCRIPT_ROOT / "graph_lance"
 NODE_LABELS = ("Person", "City", "State", "Country", "Interest")
 REL_TYPES = ("FOLLOWS", "LIVES_IN", "HAS_INTEREST", "CITY_IN", "STATE_IN")
+
+
+@dataclass(frozen=True)
+class QueryContext:
+    config: GraphConfig
+    datasets: dict[str, pa.Table]
 
 
 def build_config() -> GraphConfig:
@@ -48,35 +55,16 @@ def to_polars(result: pa.Table) -> pl.DataFrame:
     raise TypeError(f"Unsupported result type: {type(result)}")
 
 
-def format_cypher_value(value: Any) -> str:
-    if isinstance(value, str):
-        escaped = value.replace("'", "''")
-        return f"'{escaped}'"
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if value is None:
-        return "null"
-    return str(value)
-
-
-def apply_params(query: str, params: dict[str, Any]) -> str:
-    # Lance Graph currently doesn't parse $param placeholders; inline values here
-    # so the query string is fully concrete before parsing.
-    for key, value in params.items():
-        query = query.replace(f"${key}", format_cypher_value(value))
-    return query
-
-
 def execute_query(
-    engine: CypherEngine,
+    context: QueryContext,
     query: str,
     params: dict[str, Any] | None = None,
 ) -> pl.DataFrame:
+    cypher_query = CypherQuery(query).with_config(context.config)
     if params:
-        # Inline params instead of using CypherQuery.with_parameter, which isn't
-        # respected by the current parser.
-        query = apply_params(query, params)
-    result = engine.execute(query)
+        for key, value in params.items():
+            cypher_query = cypher_query.with_parameter(key, value)
+    result = cypher_query.execute(context.datasets)
     return to_polars(result)
 
 
@@ -87,7 +75,7 @@ def rename_result(result: pl.DataFrame, mapping: dict[str, str]) -> pl.DataFrame
 
 
 def _execute(
-    engine: CypherEngine,
+    context: QueryContext,
     idx: int,
     query: str,
     *,
@@ -95,14 +83,14 @@ def _execute(
     rename: dict[str, str] | None = None,
 ) -> pl.DataFrame:
     print(f"\nQuery {idx}:\n {query}")
-    result = execute_query(engine, query, params=params)
+    result = execute_query(context, query, params=params)
     if rename:
         result = rename_result(result, rename)
     print(result)
     return result
 
 
-def run_query1(engine: CypherEngine) -> pl.DataFrame:
+def run_query1(context: QueryContext) -> pl.DataFrame:
     "Who are the top 3 most-followed persons in the network?"
     query = """
         MATCH (follower:Person)-[:FOLLOWS]->(person:Person)
@@ -110,24 +98,24 @@ def run_query1(engine: CypherEngine) -> pl.DataFrame:
         ORDER BY numfollowers DESC LIMIT 3
     """
     return _execute(
-        engine,
+        context,
         1,
         query,
         rename={"personid": "personID", "numfollowers": "numFollowers"},
     )
 
 
-def run_query2(engine: CypherEngine) -> pl.DataFrame:
+def run_query2(context: QueryContext) -> pl.DataFrame:
     "In which city does the most-followed person in the network live?"
     query = """
         MATCH (follower:Person)-[:FOLLOWS]->(person:Person)-[:LIVES_IN]->(city:City)
         RETURN person.name AS name, count(follower.id) as numfollowers, city.city AS city, city.state AS state, city.country AS country
         ORDER BY numfollowers DESC LIMIT 1
     """
-    return _execute(engine, 2, query, rename={"numfollowers": "numFollowers"})
+    return _execute(context, 2, query, rename={"numfollowers": "numFollowers"})
 
 
-def run_query3(engine: CypherEngine, params: dict[str, Any]) -> pl.DataFrame:
+def run_query3(context: QueryContext, params: dict[str, Any]) -> pl.DataFrame:
     "Which 5 cities in a particular country have the lowest average age in the network?"
     query = """
         MATCH (p:Person)-[:LIVES_IN]->(c:City)-[:CITY_IN]->(s:State)-[:STATE_IN]->(co:Country)
@@ -136,7 +124,7 @@ def run_query3(engine: CypherEngine, params: dict[str, Any]) -> pl.DataFrame:
         ORDER BY averageage LIMIT 5
     """
     return _execute(
-        engine,
+        context,
         3,
         query,
         params=params,
@@ -145,7 +133,7 @@ def run_query3(engine: CypherEngine, params: dict[str, Any]) -> pl.DataFrame:
 
 
 def run_query4(
-    engine: CypherEngine,
+    context: QueryContext,
     params: dict[str, Any],
 ) -> pl.DataFrame:
     "How many persons between a certain age range are in each country?"
@@ -156,7 +144,7 @@ def run_query4(
         ORDER BY personcounts DESC LIMIT 3
     """
     return _execute(
-        engine,
+        context,
         4,
         query,
         params=params,
@@ -165,7 +153,7 @@ def run_query4(
 
 
 def run_query5(
-    engine: CypherEngine,
+    context: QueryContext,
     params: dict[str, Any],
 ) -> pl.DataFrame:
     "How many men in a particular city have an interest in the same thing?"
@@ -178,7 +166,7 @@ def run_query5(
         RETURN count(p) AS numpersons
     """
     return _execute(
-        engine,
+        context,
         5,
         query,
         params=params,
@@ -187,7 +175,7 @@ def run_query5(
 
 
 def run_query6(
-    engine: CypherEngine,
+    context: QueryContext,
     params: dict[str, Any],
 ) -> pl.DataFrame:
     "Which city has the maximum number of people of a particular gender that share a particular interest"
@@ -200,7 +188,7 @@ def run_query6(
         ORDER BY numpersons DESC LIMIT 5
     """
     return _execute(
-        engine,
+        context,
         6,
         query,
         params=params,
@@ -209,7 +197,7 @@ def run_query6(
 
 
 def run_query7(
-    engine: CypherEngine,
+    context: QueryContext,
     params: dict[str, Any],
 ) -> pl.DataFrame:
     "Which U.S. state has the maximum number of persons between a specified age who enjoy a particular interest?"
@@ -222,7 +210,7 @@ def run_query7(
         ORDER BY numpersons DESC LIMIT 1
     """
     return _execute(
-        engine,
+        context,
         7,
         query,
         params=params,
@@ -231,18 +219,18 @@ def run_query7(
 
 
 def run_query8(
-    engine: CypherEngine,
+    context: QueryContext,
 ) -> pl.DataFrame:
     "How many second-degree paths exist in the graph?"
     query = """
         MATCH (a:Person)-[r1:FOLLOWS]->(b:Person)-[r2:FOLLOWS]->(c:Person)
         RETURN count(*) AS numpaths
     """
-    return _execute(engine, 8, query, rename={"numpaths": "numPaths"})
+    return _execute(context, 8, query, rename={"numpaths": "numPaths"})
 
 
 def run_query9(
-    engine: CypherEngine,
+    context: QueryContext,
     params: dict[str, Any],
 ) -> pl.DataFrame:
     "How many paths exist in the graph through persons below a certain age to persons above a certain age?"
@@ -252,7 +240,7 @@ def run_query9(
         RETURN count(*) as numpaths
     """
     return _execute(
-        engine,
+        context,
         9,
         query,
         params=params,
@@ -261,17 +249,14 @@ def run_query9(
 
 
 def main() -> None:
-    cfg = build_config()
-    datasets = load_datasets(GRAPH_ROOT)
-    # Build catalog once so the benchmark timing focuses on query execution.
-    engine = CypherEngine(cfg, datasets)
+    context = QueryContext(build_config(), load_datasets(GRAPH_ROOT))
     start = time.perf_counter()
-    _ = run_query1(engine)
-    _ = run_query2(engine)
-    _ = run_query3(engine, {"country": "United States"})
-    _ = run_query4(engine, {"age_lower": 30, "age_upper": 40})
+    _ = run_query1(context)
+    _ = run_query2(context)
+    _ = run_query3(context, {"country": "United States"})
+    _ = run_query4(context, {"age_lower": 30, "age_upper": 40})
     _ = run_query5(
-        engine,
+        context,
         params={
             "gender": "male",
             "city": "London",
@@ -279,9 +264,9 @@ def main() -> None:
             "interest": "Fine Dining",
         },
     )
-    _ = run_query6(engine, {"gender": "female", "interest": "Tennis"})
+    _ = run_query6(context, {"gender": "female", "interest": "Tennis"})
     _ = run_query7(
-        engine,
+        context,
         {
             "country": "United States",
             "age_lower": 23,
@@ -289,8 +274,8 @@ def main() -> None:
             "interest": "Photography",
         },
     )
-    _ = run_query8(engine)
-    _ = run_query9(engine, {"age_1": 50, "age_2": 25})
+    _ = run_query8(context)
+    _ = run_query9(context, {"age_1": 50, "age_2": 25})
     elapsed = time.perf_counter() - start
     print(f"Queries completed in {elapsed:.4f}s")
 

@@ -9,9 +9,10 @@ import query
 def graph_context():
     if not query.GRAPH_ROOT.is_dir():
         raise RuntimeError("Missing graph_lance data. Run build_graph.py first.")
-    cfg = query.build_config()
-    datasets = query.load_datasets(query.GRAPH_ROOT)
-    return query.CypherEngine(cfg, datasets)
+    return query.QueryContext(
+        config=query.build_config(),
+        datasets=query.load_datasets(query.GRAPH_ROOT),
+    )
 
 
 def test_benchmark_query1(benchmark, graph_context):

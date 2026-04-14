@@ -29,7 +29,8 @@ uv run build_graph.py
 ## Query graph
 
 The script `query.py` runs the same suite of Cypher queries as Ladybug and prints
-the results as Polars DataFrames.
+the results as Polars DataFrames. Parameterized predicates now use Lance Graph's
+native `$param` support via `CypherQuery.with_parameter(...)`.
 
 ```sh
 uv run query.py
@@ -44,7 +45,6 @@ Query 1:
         RETURN person.id AS personid, person.name AS name, count(follower.id) AS numfollowers
         ORDER BY numfollowers DESC LIMIT 3
     
-Top 3 most-followed persons:
 shape: (3, 3)
 ┌──────────┬─────────────────┬──────────────┐
 │ personID ┆ name            ┆ numFollowers │
@@ -62,7 +62,6 @@ Query 2:
         RETURN person.name AS name, count(follower.id) as numfollowers, city.city AS city, city.state AS state, city.country AS country
         ORDER BY numfollowers DESC LIMIT 1
     
-City in which most-followed person lives:
 shape: (1, 5)
 ┌─────────────────┬──────────────┬────────┬───────┬───────────────┐
 │ name            ┆ numFollowers ┆ city   ┆ state ┆ country       │
@@ -79,7 +78,6 @@ Query 3:
         RETURN c.city AS city, avg(p.age) AS averageage
         ORDER BY averageage LIMIT 5
     
-Cities with lowest average age in United States:
 shape: (5, 2)
 ┌─────────────┬────────────┐
 │ city        ┆ averageAge │
@@ -100,7 +98,6 @@ Query 4:
         RETURN country.country AS countries, count(country) AS personcounts
         ORDER BY personcounts DESC LIMIT 3
     
-Persons between ages 30-40 in each country:
 shape: (3, 2)
 ┌────────────────┬──────────────┐
 │ countries      ┆ personCounts │
@@ -121,7 +118,6 @@ Query 5:
         AND c.city = $city AND c.country = $country
         RETURN count(p) AS numpersons
     
-Number of male users in London, United Kingdom who have an interest in Fine Dining:
 shape: (1, 1)
 ┌────────────┐
 │ numPersons │
@@ -140,7 +136,6 @@ Query 6:
         RETURN count(p.id) AS numpersons, c.city AS city, c.country AS country
         ORDER BY numpersons DESC LIMIT 5
     
-City with the most female users who have an interest in Tennis:
 shape: (5, 3)
 ┌────────────┬─────────────┬────────────────┐
 │ numPersons ┆ city        ┆ country        │
@@ -163,8 +158,6 @@ Query 7:
         RETURN count(p.id) AS numpersons, s.state AS state, s.country AS country
         ORDER BY numpersons DESC LIMIT 1
     
-
-        State in United States with the most users between ages 23-30 who have an interest in Photography:
 shape: (1, 3)
 ┌────────────┬────────────┬───────────────┐
 │ numPersons ┆ state      ┆ country       │
@@ -173,15 +166,12 @@ shape: (1, 3)
 ╞════════════╪════════════╪═══════════════╡
 │ 130        ┆ California ┆ United States │
 └────────────┴────────────┴───────────────┘
-        
 
 Query 8:
  
         MATCH (a:Person)-[r1:FOLLOWS]->(b:Person)-[r2:FOLLOWS]->(c:Person)
         RETURN count(*) AS numpaths
     
-
-        Number of second-degree paths:
 shape: (1, 1)
 ┌──────────┐
 │ numPaths │
@@ -190,7 +180,6 @@ shape: (1, 1)
 ╞══════════╡
 │ 58431994 │
 └──────────┘
-        
 
 Query 9:
  
@@ -198,8 +187,6 @@ Query 9:
         WHERE b.age < $age_1 AND c.age > $age_2
         RETURN count(*) as numpaths
     
-
-        Number of paths through persons below 50 to persons above 25:
 shape: (1, 1)
 ┌──────────┐
 │ numPaths │
@@ -208,42 +195,41 @@ shape: (1, 1)
 ╞══════════╡
 │ 45343391 │
 └──────────┘
-        
-Queries completed in 0.4013s
+Queries completed in 0.3451s
 ```
 
 ## Query performance
 
-```
+```sh
 ❯ uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-iterations=5 --benchmark-disable-gc --benchmark-sort=fullname
-==================== test session starts ====================
+===================================== test session starts =====================================
 platform darwin -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0
 benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=True min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=5)
 rootdir: /Users/prrao/code/graph-benchmark
 configfile: pyproject.toml
 plugins: anyio-4.12.1, benchmark-5.2.3, asyncio-1.3.0, Faker-40.1.2
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 9 items                                           
+collected 9 items                                                                             
 
-benchmark_query.py .........                                                                  [100%]
+benchmark_query.py .........                                                            [100%]
 
 
--------------------------------------------------------------------------------------- benchmark: 9 tests --------------------------------------------------------------------------------------
-Name (time in ms)              Min                 Max                Mean             StdDev              Median                IQR            Outliers       OPS            Rounds  Iterations
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-test_benchmark_query1      18.0984 (7.26)      22.3730 (7.50)      19.4613 (7.31)      1.1107 (13.85)     19.0682 (7.18)      1.1054 (14.64)        11;4   51.3839 (0.14)         45           1
-test_benchmark_query2      36.3416 (14.58)     45.8018 (15.36)     40.5049 (15.22)     3.2167 (40.12)     39.8574 (15.02)     5.3771 (71.24)        11;0   24.6884 (0.07)         24           1
-test_benchmark_query3       4.3515 (1.75)       5.1906 (1.74)       4.6716 (1.76)      0.1366 (1.70)       4.6591 (1.76)      0.1456 (1.93)         51;9  214.0586 (0.57)        192           1
-test_benchmark_query4       2.7132 (1.09)       6.6592 (2.23)       2.8534 (1.07)      0.3158 (3.94)       2.8142 (1.06)      0.0755 (1.0)          5;15  350.4530 (0.93)        319           1
-test_benchmark_query5       2.4923 (1.0)        2.9817 (1.0)        2.6606 (1.0)       0.0802 (1.0)        2.6544 (1.0)       0.0925 (1.22)        90;16  375.8592 (1.0)         354           1
-test_benchmark_query6       3.0478 (1.22)       3.6280 (1.22)       3.2906 (1.24)      0.0958 (1.20)       3.2846 (1.24)      0.1257 (1.67)         81;3  303.8925 (0.81)        289           1
-test_benchmark_query7       4.1371 (1.66)       4.9146 (1.65)       4.3722 (1.64)      0.1248 (1.56)       4.3576 (1.64)      0.1312 (1.74)        63;10  228.7170 (0.61)        227           1
-test_benchmark_query8     126.0025 (50.56)    135.6173 (45.48)    129.8888 (48.82)     3.5946 (44.83)    129.1383 (48.65)     6.3651 (84.33)         3;0    7.6989 (0.02)          8           1
-test_benchmark_query9     109.7043 (44.02)    179.8395 (60.31)    125.9962 (47.36)    23.5764 (294.03)   115.5153 (43.52)    16.2010 (214.64)        2;1    7.9367 (0.02)          9           1
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------- benchmark: 9 tests -------------------------------------------------------------------------------------
+Name (time in ms)              Min                 Max                Mean            StdDev              Median               IQR            Outliers       OPS            Rounds  Iterations
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+test_benchmark_query1      19.5093 (4.65)      27.9158 (2.48)      21.5448 (4.52)     1.9446 (2.78)      20.9937 (4.59)     0.8922 (2.73)          4;4   46.4149 (0.22)         33           1
+test_benchmark_query2      39.2101 (9.35)      59.7954 (5.32)      44.3800 (9.31)     4.8681 (6.97)      43.8797 (9.59)     6.7535 (20.67)         3;1   22.5327 (0.11)         20           1
+test_benchmark_query3       6.2803 (1.50)      15.9057 (1.42)       6.9717 (1.46)     1.3594 (1.95)       6.6377 (1.45)     0.3909 (1.20)          7;8  143.4367 (0.68)        127           1
+test_benchmark_query4       4.4251 (1.05)      12.8335 (1.14)       4.9221 (1.03)     0.8815 (1.26)       4.7288 (1.03)     0.3268 (1.0)           7;7  203.1656 (0.97)        205           1
+test_benchmark_query5       4.1957 (1.0)       12.1846 (1.08)       4.7647 (1.0)      0.9034 (1.29)       4.5744 (1.0)      0.3350 (1.03)         9;11  209.8755 (1.0)         213           1
+test_benchmark_query6       4.7522 (1.13)      11.2365 (1.0)        5.4362 (1.14)     0.6988 (1.0)        5.3026 (1.16)     0.4323 (1.32)          8;6  183.9508 (0.88)        171           1
+test_benchmark_query7       5.9705 (1.42)      12.3711 (1.10)       6.6792 (1.40)     1.1412 (1.63)       6.3740 (1.39)     0.3711 (1.14)         9;10  149.7188 (0.71)        155           1
+test_benchmark_query8     122.2570 (29.14)    133.6635 (11.90)    126.2321 (26.49)    3.7176 (5.32)     125.4626 (27.43)    3.3949 (10.39)         2;1    7.9219 (0.04)          7           1
+test_benchmark_query9     109.8777 (26.19)    117.4411 (10.45)    111.6710 (23.44)    2.5000 (3.58)     110.8712 (24.24)    1.9847 (6.07)          1;1    8.9549 (0.04)          8           1
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Legend:
   Outliers: 1 Standard Deviation from Mean; 1.5 IQR (InterQuartile Range) from 1st Quartile and 3rd Quartile.
   OPS: Operations Per Second, computed as 1 / Mean
-======================================== 9 passed in 10.87s =========================================
+===================================== 9 passed in 10.54s ======================================
 ```
