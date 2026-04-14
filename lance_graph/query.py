@@ -1,13 +1,12 @@
-"""
-Run the same benchmark queries as ladybug/query.py against Lance datasets.
+"""Benchmark query helpers for Lance Graph.
 
-- Lance stores each node/edge label as a separate on-disk columnar dataset.
-- GraphConfig maps those datasets into a logical graph schema so Cypher
-  queries can join across files.
-- Results are printed as Polars DataFrames to match the Ladybug output.
+This module is intentionally simple:
+- Build `GraphConfig` + load datasets once.
+- Reuse a lightweight query context across benchmark queries.
 """
 
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -18,9 +17,14 @@ from lance_graph import CypherQuery, GraphConfig
 
 SCRIPT_ROOT = Path(__file__).resolve().parent
 GRAPH_ROOT = SCRIPT_ROOT / "graph_lance"
-
 NODE_LABELS = ("Person", "City", "State", "Country", "Interest")
 REL_TYPES = ("FOLLOWS", "LIVES_IN", "HAS_INTEREST", "CITY_IN", "STATE_IN")
+
+
+@dataclass(frozen=True)
+class QueryContext:
+    config: GraphConfig
+    datasets: dict[str, pa.Table]
 
 
 def build_config() -> GraphConfig:
@@ -51,37 +55,16 @@ def to_polars(result: pa.Table) -> pl.DataFrame:
     raise TypeError(f"Unsupported result type: {type(result)}")
 
 
-def format_cypher_value(value: Any) -> str:
-    if isinstance(value, str):
-        escaped = value.replace("'", "''")
-        return f"'{escaped}'"
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if value is None:
-        return "null"
-    return str(value)
-
-
-def apply_params(query: str, params: dict[str, Any]) -> str:
-    # Lance Graph currently doesn't parse $param placeholders; inline values here
-    # so the query string is fully concrete before parsing.
-    for key, value in params.items():
-        query = query.replace(f"${key}", format_cypher_value(value))
-    return query
-
-
 def execute_query(
+    context: QueryContext,
     query: str,
-    cfg: GraphConfig,
-    datasets: dict[str, pa.Table],
     params: dict[str, Any] | None = None,
 ) -> pl.DataFrame:
+    cypher_query = CypherQuery(query).with_config(context.config)
     if params:
-        # Inline params instead of using CypherQuery.with_parameter, which isn't
-        # respected by the current parser.
-        query = apply_params(query, params)
-    cypher = CypherQuery(query)
-    result = cypher.with_config(cfg).execute(datasets)
+        for key, value in params.items():
+            cypher_query = cypher_query.with_parameter(key, value)
+    result = cypher_query.execute(context.datasets)
     return to_polars(result)
 
 
@@ -91,37 +74,48 @@ def rename_result(result: pl.DataFrame, mapping: dict[str, str]) -> pl.DataFrame
     return result.rename(mapping)
 
 
-def run_query1(cfg: GraphConfig, datasets: dict[str, pa.Table]) -> pl.DataFrame:
+def _execute(
+    context: QueryContext,
+    idx: int,
+    query: str,
+    *,
+    params: dict[str, Any] | None = None,
+    rename: dict[str, str] | None = None,
+) -> pl.DataFrame:
+    print(f"\nQuery {idx}:\n {query}")
+    result = execute_query(context, query, params=params)
+    if rename:
+        result = rename_result(result, rename)
+    print(result)
+    return result
+
+
+def run_query1(context: QueryContext) -> pl.DataFrame:
     "Who are the top 3 most-followed persons in the network?"
     query = """
         MATCH (follower:Person)-[:FOLLOWS]->(person:Person)
         RETURN person.id AS personid, person.name AS name, count(follower.id) AS numfollowers
         ORDER BY numfollowers DESC LIMIT 3
     """
-    print(f"\nQuery 1:\n {query}")
-    result = execute_query(query, cfg, datasets)
-    result = rename_result(result, {"personid": "personID", "numfollowers": "numFollowers"})
-    print(f"Top 3 most-followed persons:\n{result}")
-    return result
+    return _execute(
+        context,
+        1,
+        query,
+        rename={"personid": "personID", "numfollowers": "numFollowers"},
+    )
 
 
-def run_query2(cfg: GraphConfig, datasets: dict[str, pa.Table]) -> pl.DataFrame:
+def run_query2(context: QueryContext) -> pl.DataFrame:
     "In which city does the most-followed person in the network live?"
     query = """
         MATCH (follower:Person)-[:FOLLOWS]->(person:Person)-[:LIVES_IN]->(city:City)
         RETURN person.name AS name, count(follower.id) as numfollowers, city.city AS city, city.state AS state, city.country AS country
         ORDER BY numfollowers DESC LIMIT 1
     """
-    print(f"\nQuery 2:\n {query}")
-    result = execute_query(query, cfg, datasets)
-    result = rename_result(result, {"numfollowers": "numFollowers"})
-    print(f"City in which most-followed person lives:\n{result}")
-    return result
+    return _execute(context, 2, query, rename={"numfollowers": "numFollowers"})
 
 
-def run_query3(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
-) -> pl.DataFrame:
+def run_query3(context: QueryContext, params: dict[str, Any]) -> pl.DataFrame:
     "Which 5 cities in a particular country have the lowest average age in the network?"
     query = """
         MATCH (p:Person)-[:LIVES_IN]->(c:City)-[:CITY_IN]->(s:State)-[:STATE_IN]->(co:Country)
@@ -129,15 +123,18 @@ def run_query3(
         RETURN c.city AS city, avg(p.age) AS averageage
         ORDER BY averageage LIMIT 5
     """
-    print(f"\nQuery 3:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
-    result = rename_result(result, {"averageage": "averageAge"})
-    print(f"Cities with lowest average age in {params['country']}:\n{result}")
-    return result
+    return _execute(
+        context,
+        3,
+        query,
+        params=params,
+        rename={"averageage": "averageAge"},
+    )
 
 
 def run_query4(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
+    context: QueryContext,
+    params: dict[str, Any],
 ) -> pl.DataFrame:
     "How many persons between a certain age range are in each country?"
     query = """
@@ -146,99 +143,95 @@ def run_query4(
         RETURN country.country AS countries, count(country) AS personcounts
         ORDER BY personcounts DESC LIMIT 3
     """
-    print(f"\nQuery 4:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
-    result = rename_result(result, {"personcounts": "personCounts"})
-    print(
-        f"Persons between ages {params['age_lower']}-{params['age_upper']} in each country:\n{result}"
+    return _execute(
+        context,
+        4,
+        query,
+        params=params,
+        rename={"personcounts": "personCounts"},
     )
-    return result
 
 
 def run_query5(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
+    context: QueryContext,
+    params: dict[str, Any],
 ) -> pl.DataFrame:
     "How many men in a particular city have an interest in the same thing?"
     query = """
         MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest)
         MATCH (p)-[:LIVES_IN]->(c:City)
-        WHERE lower(i.interest) = lower($interest)
-        AND lower(p.gender) = lower($gender)
+        WHERE i.interest = $interest
+        AND p.gender = $gender
         AND c.city = $city AND c.country = $country
         RETURN count(p) AS numpersons
     """
-    print(f"\nQuery 5:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
-    result = rename_result(result, {"numpersons": "numPersons"})
-    print(
-        f"Number of {params['gender']} users in {params['city']}, {params['country']} who have an interest in {params['interest']}:\n{result}"
+    return _execute(
+        context,
+        5,
+        query,
+        params=params,
+        rename={"numpersons": "numPersons"},
     )
-    return result
 
 
 def run_query6(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
+    context: QueryContext,
+    params: dict[str, Any],
 ) -> pl.DataFrame:
     "Which city has the maximum number of people of a particular gender that share a particular interest"
     query = """
         MATCH (p:Person)-[:HAS_INTEREST]->(i:Interest)
         MATCH (p)-[:LIVES_IN]->(c:City)
-        WHERE lower(i.interest) = lower($interest)
-        AND lower(p.gender) = lower($gender)
+        WHERE i.interest = $interest
+        AND p.gender = $gender
         RETURN count(p.id) AS numpersons, c.city AS city, c.country AS country
         ORDER BY numpersons DESC LIMIT 5
     """
-    print(f"\nQuery 6:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
-    result = rename_result(result, {"numpersons": "numPersons"})
-    print(
-        f"City with the most {params['gender']} users who have an interest in {params['interest']}:\n{result}"
+    return _execute(
+        context,
+        6,
+        query,
+        params=params,
+        rename={"numpersons": "numPersons"},
     )
-    return result
 
 
 def run_query7(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
+    context: QueryContext,
+    params: dict[str, Any],
 ) -> pl.DataFrame:
     "Which U.S. state has the maximum number of persons between a specified age who enjoy a particular interest?"
     query = """
         MATCH (p:Person)-[:LIVES_IN]->(:City)-[:CITY_IN]->(s:State)
         MATCH (p)-[:HAS_INTEREST]->(i:Interest)
         WHERE p.age >= $age_lower AND p.age <= $age_upper AND s.country = $country
-        AND lower(i.interest) = lower($interest)
+        AND i.interest = $interest
         RETURN count(p.id) AS numpersons, s.state AS state, s.country AS country
         ORDER BY numpersons DESC LIMIT 1
     """
-    print(f"\nQuery 7:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
-    result = rename_result(result, {"numpersons": "numPersons"})
-    print(
-        f"""
-        State in {params['country']} with the most users between ages {params['age_lower']}-{params['age_upper']} who have an interest in {params['interest']}:\n{result}
-        """
+    return _execute(
+        context,
+        7,
+        query,
+        params=params,
+        rename={"numpersons": "numPersons"},
     )
-    return result
 
 
-def run_query8(cfg: GraphConfig, datasets: dict[str, pa.Table]) -> pl.DataFrame:
+def run_query8(
+    context: QueryContext,
+) -> pl.DataFrame:
     "How many second-degree paths exist in the graph?"
     query = """
         MATCH (a:Person)-[r1:FOLLOWS]->(b:Person)-[r2:FOLLOWS]->(c:Person)
         RETURN count(*) AS numpaths
     """
-    print(f"\nQuery 8:\n {query}")
-    result = execute_query(query, cfg, datasets)
-    result = rename_result(result, {"numpaths": "numPaths"})
-    print(
-        f"""
-        Number of second-degree paths:\n{result}
-        """
-    )
-    return result
+    return _execute(context, 8, query, rename={"numpaths": "numPaths"})
 
 
 def run_query9(
-    cfg: GraphConfig, datasets: dict[str, pa.Table], params: dict[str, Any]
+    context: QueryContext,
+    params: dict[str, Any],
 ) -> pl.DataFrame:
     "How many paths exist in the graph through persons below a certain age to persons above a certain age?"
     query = """
@@ -246,49 +239,43 @@ def run_query9(
         WHERE b.age < $age_1 AND c.age > $age_2
         RETURN count(*) as numpaths
     """
-
-    print(f"\nQuery 9:\n {query}")
-    result = execute_query(query, cfg, datasets, params=params)
-    result = rename_result(result, {"numpaths": "numPaths"})
-    print(
-        f"""
-        Number of paths through persons below {params['age_1']} to persons above {params['age_2']}:\n{result}
-        """
+    return _execute(
+        context,
+        9,
+        query,
+        params=params,
+        rename={"numpaths": "numPaths"},
     )
-    return result
 
 
 def main() -> None:
-    cfg = build_config()
-    datasets = load_datasets(GRAPH_ROOT)
+    context = QueryContext(build_config(), load_datasets(GRAPH_ROOT))
     start = time.perf_counter()
-    _ = run_query1(cfg, datasets)
-    _ = run_query2(cfg, datasets)
-    _ = run_query3(cfg, datasets, params={"country": "United States"})
-    _ = run_query4(cfg, datasets, params={"age_lower": 30, "age_upper": 40})
+    _ = run_query1(context)
+    _ = run_query2(context)
+    _ = run_query3(context, {"country": "United States"})
+    _ = run_query4(context, {"age_lower": 30, "age_upper": 40})
     _ = run_query5(
-        cfg,
-        datasets,
+        context,
         params={
             "gender": "male",
             "city": "London",
             "country": "United Kingdom",
-            "interest": "fine dining",
+            "interest": "Fine Dining",
         },
     )
-    _ = run_query6(cfg, datasets, params={"gender": "female", "interest": "tennis"})
+    _ = run_query6(context, {"gender": "female", "interest": "Tennis"})
     _ = run_query7(
-        cfg,
-        datasets,
-        params={
+        context,
+        {
             "country": "United States",
             "age_lower": 23,
             "age_upper": 30,
-            "interest": "photography",
+            "interest": "Photography",
         },
     )
-    _ = run_query8(cfg, datasets)
-    _ = run_query9(cfg, datasets, params={"age_1": 50, "age_2": 25})
+    _ = run_query8(context)
+    _ = run_query9(context, {"age_1": 50, "age_2": 25})
     elapsed = time.perf_counter() - start
     print(f"Queries completed in {elapsed:.4f}s")
 
