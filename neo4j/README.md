@@ -25,7 +25,7 @@ docker compose down
 ## Build graph
 
 > [!NOTE]
-> All timing numbers shown below are on an M3 Macbook Pro with 32 GB of RAM.
+> All timing numbers shown below are on an M5 MacBook Pro (10-core CPU: 4 performance + 6 efficiency cores) with 24 GB of RAM, running macOS 26.6.2.
 
 The script `build_graph.py` contains the necessary methods to connect to the Neo4j DB and ingest the data from the CSV files, in batches for large amounts of data.
 
@@ -51,8 +51,8 @@ The numbers shown below are for when we ingest 100K person nodes, ~10K location 
 # Graph has 100K nodes and ~2.4M edges
 $ uv run build_graph.py -b 500000
 
-Nodes loaded in 3.2s
-Edges loaded in 39.1s
+Nodes loaded in 3.6s
+Edges loaded in 44.4s
 ```
 
 As expected, the nodes load much faster than the edges, since there are many more edges than nodes. In addition, the nodes in Neo4j are indexed (via uniqueness constraints), following which the edges are created based on a match on existing nodes, allowing us to achieve this performance.
@@ -118,11 +118,11 @@ shape: (5, 2)
 │ ---         ┆ ---        │
 │ str         ┆ f64        │
 ╞═════════════╪════════════╡
-│ Seattle     ┆ 39.65897   │
-│ Dallas      ┆ 39.72201   │
-│ Austin      ┆ 39.772832  │
-│ Kansas City ┆ 39.774014  │
-│ Miami       ┆ 39.775695  │
+│ Seattle     ┆ 40.386619  │
+│ Dallas      ┆ 40.438012  │
+│ Kansas City ┆ 40.492504  │
+│ Miami       ┆ 40.499395  │
+│ Austin      ┆ 40.509249  │
 └─────────────┴────────────┘
 
 Query 4:
@@ -139,9 +139,9 @@ shape: (3, 2)
 │ ---            ┆ ---          │
 │ str            ┆ i64          │
 ╞════════════════╪══════════════╡
-│ United States  ┆ 30713        │
-│ Canada         ┆ 2989         │
-│ United Kingdom ┆ 1843         │
+│ United States  ┆ 30741        │
+│ Canada         ┆ 2976         │
+│ United Kingdom ┆ 1864         │
 └────────────────┴──────────────┘
 
 Query 5:
@@ -206,7 +206,7 @@ shape: (1, 3)
 │ ---        ┆ ---        ┆ ---           │
 │ i64        ┆ str        ┆ str           │
 ╞════════════╪════════════╪═══════════════╡
-│ 130        ┆ California ┆ United States │
+│ 117        ┆ California ┆ United States │
 └────────────┴────────────┴───────────────┘
         
 
@@ -241,10 +241,10 @@ shape: (1, 1)
 │ ---      │
 │ i64      │
 ╞══════════╡
-│ 45343391 │
+│ 45362926 │
 └──────────┘
         
-Neo4j query script completed in 9.053326s
+Neo4j query script completed in 10.471270s
 ```
 
 ### Query performance benchmark
@@ -253,34 +253,34 @@ The benchmark is run using `pytest-benchmark` package as follows.
 
 ```sh
 $ uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-iterations=5 --benchmark-disable-gc --benchmark-sort=fullname
-=========================== test session starts ===========================
-platform darwin -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0
+============================= test session starts ==============================
+platform darwin -- Python 3.13.14, pytest-9.0.2, pluggy-1.6.0
 benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=True min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=5)
 rootdir: /Users/prrao/code/graph-benchmark
 configfile: pyproject.toml
 plugins: anyio-4.12.1, benchmark-5.2.3, asyncio-1.3.0, Faker-40.1.2
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 9 items                                                         
+collected 9 items
 
-benchmark_query.py .........                                        [100%]
+benchmark_query.py .........                                             [100%]
 
 
 --------------------------------------------------------------------------------- benchmark: 9 tests ---------------------------------------------------------------------------------
 Name (time in s)             Min               Max              Mean            StdDev            Median               IQR            Outliers       OPS            Rounds  Iterations
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-test_benchmark_query1     1.5302 (263.22)   1.5735 (120.31)   1.5520 (201.38)   0.0197 (13.74)    1.5539 (204.09)   0.0369 (19.42)         2;0    0.6443 (0.00)          5           1
-test_benchmark_query2     0.3904 (67.15)    0.4053 (30.99)    0.3950 (51.25)    0.0059 (4.16)     0.3936 (51.70)    0.0052 (2.76)          1;1    2.5317 (0.02)          5           1
-test_benchmark_query3     0.0328 (5.65)     0.0531 (4.06)     0.0391 (5.07)     0.0051 (3.58)     0.0381 (5.01)     0.0072 (3.80)          5;0   25.5830 (0.20)         18           1
-test_benchmark_query4     0.0345 (5.94)     0.0457 (3.49)     0.0383 (4.97)     0.0031 (2.15)     0.0376 (4.94)     0.0043 (2.29)          9;0   26.0961 (0.20)         25           1
-test_benchmark_query5     0.0058 (1.0)      0.0131 (1.0)      0.0077 (1.0)      0.0014 (1.0)      0.0076 (1.0)      0.0019 (1.0)          21;2  129.7534 (1.0)          73           1
-test_benchmark_query6     0.0176 (3.03)     0.0250 (1.91)     0.0212 (2.75)     0.0016 (1.14)     0.0210 (2.76)     0.0020 (1.07)         16;0   47.2141 (0.36)         48           1
-test_benchmark_query7     0.1147 (19.73)    0.1217 (9.31)     0.1174 (15.24)    0.0023 (1.64)     0.1166 (15.32)    0.0023 (1.19)          4;0    8.5164 (0.07)          9           1
-test_benchmark_query8     2.8002 (481.67)   2.8990 (221.67)   2.8312 (367.36)   0.0439 (30.69)    2.8040 (368.27)   0.0639 (33.63)         1;0    0.3532 (0.00)          5           1
-test_benchmark_query9     2.9634 (509.73)   3.0199 (230.91)   2.9867 (387.54)   0.0244 (17.08)    2.9736 (390.56)   0.0393 (20.66)         1;0    0.3348 (0.00)          5           1
+test_benchmark_query1     1.8341 (260.99)   1.9861 (172.92)   1.9191 (234.23)   0.0765 (108.01)   1.9534 (241.01)   0.1460 (187.78)        2;0    0.5211 (0.00)          5           1
+test_benchmark_query2     0.4701 (66.90)    0.5382 (46.86)    0.4961 (60.55)    0.0293 (41.39)    0.4876 (60.16)    0.0486 (62.50)         1;0    2.0156 (0.02)          5           1
+test_benchmark_query3     0.0363 (5.17)     0.0534 (4.64)     0.0402 (4.91)     0.0051 (7.23)     0.0379 (4.67)     0.0044 (5.65)          4;4   24.8629 (0.20)         24           1
+test_benchmark_query4     0.0370 (5.26)     0.0603 (5.25)     0.0458 (5.59)     0.0093 (13.20)    0.0409 (5.04)     0.0189 (24.28)         6;0   21.8340 (0.18)         16           1
+test_benchmark_query5     0.0070 (1.0)      0.0115 (1.0)      0.0082 (1.0)      0.0007 (1.0)      0.0081 (1.0)      0.0009 (1.13)         24;2  122.0529 (1.0)          98           1
+test_benchmark_query6     0.0185 (2.63)     0.0263 (2.29)     0.0198 (2.41)     0.0014 (1.92)     0.0194 (2.40)     0.0008 (1.0)           3;3   50.6057 (0.41)         48           1
+test_benchmark_query7     0.1007 (14.33)    0.1231 (10.72)    0.1065 (13.00)    0.0069 (9.78)     0.1039 (12.81)    0.0057 (7.36)          1;1    9.3874 (0.08)         10           1
+test_benchmark_query8     3.2891 (468.03)   3.5777 (311.50)   3.4075 (415.89)   0.1143 (161.40)   3.3658 (415.27)   0.1638 (210.62)        2;0    0.2935 (0.00)          5           1
+test_benchmark_query9     4.5452 (646.78)   6.0814 (529.48)   4.9030 (598.42)   0.6664 (941.12)   4.5601 (562.62)   0.5617 (722.26)        1;1    0.2040 (0.00)          5           1
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Legend:
   Outliers: 1 Standard Deviation from Mean; 1.5 IQR (InterQuartile Range) from 1st Quartile and 3rd Quartile.
   OPS: Operations Per Second, computed as 1 / Mean
-====================== 9 passed in 62.49s (0:01:02) =======================
+========================= 9 passed in 80.15s (0:01:20) =========================
 ```
