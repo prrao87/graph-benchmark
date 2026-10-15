@@ -93,6 +93,7 @@ def plot_results(
         "lance-graph": "#7f3fbf",
         "neo4j": "#1f77b4",
         "kuzu": "#ff7f0e",
+        "duckpgq": "#2ca02c",
     }
     x = np.arange(len(queries))
     bar_width = 0.8 / max(len(systems), 1)

@@ -2,14 +2,14 @@
 
 This repo was originally a benchmark for Kuzu described in this [blog post](https://thedataquarry.com/posts/embedded-db-2/). Since October 2025, Kuzu has been archived and is no longer maintained. Kuzu is now succeeded by a fork, [Ladybug](https://github.com/LadybugDB/ladybug), maintained by @adsharma.
 
-The benchmarks below are updated to compare multi-hop retrieval performance across newer systems like Ladybug and [lance-graph](https://github.com/lance-format/lance-graph),
-an open source graph engine built in Rust on top of the Lance format.
+The benchmarks below are updated to compare multi-hop retrieval performance across newer systems like Ladybug, [lance-graph](https://github.com/lance-format/lance-graph),
+an open source graph engine built in Rust on top of the Lance format, and [DuckPGQ](https://duckpgq.org/), a community extension that adds SQL/PGQ graph pattern matching to [DuckDB](https://duckdb.org/).
 
 It does the following:
 
 * Generate an artificial social network dataset, including persons, interests and locations
   * You can scale up the size of the artificial dataset using the scripts provided and test query performance on larger graphs
-* Ingest the dataset into two graph databases: Kuzu and Neo4j (community edition)
+* Ingest the dataset into several graph systems: Neo4j (community edition), Kuzu, Ladybug, lance-graph and DuckDB + DuckPGQ
 * Run a set of queries that compare the query performance on a suite of queries that involve multi-hop traversals or top-k results with filters and aggregations
 
 ## Setup
@@ -82,7 +82,7 @@ The generated dataset produces a rich and well-connected graph, a subgraph of wh
 
 ## Run the queries
 
-Some sample queries are run in each DB to verify that the data is ingested correctly, and that the results are consistent with one another.
+Some sample queries are run in each DB to verify that the data is ingested correctly, and that the results are consistent with one another. The queries are written in Cypher for Neo4j, Kuzu, Ladybug and lance-graph, and in SQL/PGQ for DuckPGQ.
 
 The following questions are asked of both graphs:
 
