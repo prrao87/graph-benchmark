@@ -135,6 +135,9 @@ def main() -> None:
             neo4j_system = path.stem
             break
 
+    # Show DuckPGQ last, after the Cypher-based systems
+    files.sort(key=lambda path: "duckpgq" in path.stem)
+
     systems = [path.stem for path in files]
     system_results = {path.stem: parse_benchmark_file(path) for path in files}
     all_queries = sorted(
