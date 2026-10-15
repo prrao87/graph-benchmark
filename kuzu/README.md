@@ -3,7 +3,7 @@
 This section describes how to build and query a graph of the social network data in Kuzu. It uses Kùzu's [client API](https://github.com/kuzudb/kuzu) to perform the ingestion and querying.
 
 > [!NOTE]
-> All timing numbers shown below are on an M3 Macbook Pro with 32 GB of RAM.
+> All timing numbers shown below are on an M5 MacBook Pro (10-core CPU: 4 performance + 6 efficiency cores) with 24 GB of RAM, running macOS 26.6.2.
 
 ## Setup
 
@@ -40,8 +40,8 @@ As expected, the nodes load much faster than the edges, since there are many mor
 ```bash
 # Graph has 100K nodes and ~2.4M edges
 $ uv run build_graph.py
-Nodes loaded in 0.2s
-Edges loaded in 0.4s
+Nodes loaded in 0.3s
+Edges loaded in 0.5s
 Successfully loaded nodes and edges into Kuzu
 ```
 
@@ -105,11 +105,11 @@ shape: (5, 2)
 │ ---         ┆ ---        │
 │ str         ┆ f64        │
 ╞═════════════╪════════════╡
-│ Seattle     ┆ 39.65897   │
-│ Dallas      ┆ 39.72201   │
-│ Austin      ┆ 39.772832  │
-│ Kansas City ┆ 39.774014  │
-│ Miami       ┆ 39.775695  │
+│ Seattle     ┆ 40.386619  │
+│ Dallas      ┆ 40.438012  │
+│ Kansas City ┆ 40.492504  │
+│ Miami       ┆ 40.499395  │
+│ Austin      ┆ 40.509249  │
 └─────────────┴────────────┘
 
 Query 4:
@@ -126,9 +126,9 @@ shape: (3, 2)
 │ ---            ┆ ---          │
 │ str            ┆ i64          │
 ╞════════════════╪══════════════╡
-│ United States  ┆ 30713        │
-│ Canada         ┆ 2989         │
-│ United Kingdom ┆ 1843         │
+│ United States  ┆ 30741        │
+│ Canada         ┆ 2976         │
+│ United Kingdom ┆ 1864         │
 └────────────────┴──────────────┘
 
 Query 5:
@@ -169,8 +169,8 @@ shape: (5, 3)
 │ i64        ┆ str         ┆ str            │
 ╞════════════╪═════════════╪════════════════╡
 │ 77         ┆ Birmingham  ┆ United Kingdom │
-│ 67         ┆ Charlotte   ┆ United States  │
 │ 67         ┆ Kansas City ┆ United States  │
+│ 67         ┆ Charlotte   ┆ United States  │
 │ 65         ┆ Montreal    ┆ Canada         │
 │ 65         ┆ Portland    ┆ United States  │
 └────────────┴─────────────┴────────────────┘
@@ -193,7 +193,7 @@ shape: (1, 3)
 │ ---        ┆ ---        ┆ ---           │
 │ i64        ┆ str        ┆ str           │
 ╞════════════╪════════════╪═══════════════╡
-│ 130        ┆ California ┆ United States │
+│ 117        ┆ California ┆ United States │
 └────────────┴────────────┴───────────────┘
         
 
@@ -228,44 +228,44 @@ shape: (1, 1)
 │ ---      │
 │ i64      │
 ╞══════════╡
-│ 45343391 │
+│ 45362926 │
 └──────────┘
         
-Queries completed in 0.7251s
+Queries completed in 1.0597s
 ```
 
 ## Query performance
 
 ```sh
 $ uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-iterations=5 --benchmark-disable-gc --benchmark-sort=fullname
-============================== test session starts ===============================
-platform darwin -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0
+============================= test session starts ==============================
+platform darwin -- Python 3.13.14, pytest-9.0.2, pluggy-1.6.0
 benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=True min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=5)
 rootdir: /Users/prrao/code/graph-benchmark
 configfile: pyproject.toml
 plugins: anyio-4.12.1, benchmark-5.2.3, asyncio-1.3.0, Faker-40.1.2
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 9 items                                                                
+collected 9 items
 
-benchmark_query.py .........                                               [100%]
+benchmark_query.py .........                                             [100%]
 
 
--------------------------------------------------------------------------------------- benchmark: 9 tests -------------------------------------------------------------------------------------
-Name (time in ms)              Min                 Max                Mean            StdDev              Median                IQR            Outliers       OPS            Rounds  Iterations
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-test_benchmark_query1     135.7446 (22.22)    143.9364 (21.08)    138.0407 (21.54)    3.3316 (20.83)    136.9072 (21.48)     2.2625 (10.21)         1;1    7.2442 (0.05)          5           1
-test_benchmark_query2     218.6203 (35.78)    241.7822 (35.41)    227.8536 (35.55)    9.5730 (59.86)    223.3449 (35.05)    14.4699 (65.30)         1;0    4.3888 (0.03)          5           1
-test_benchmark_query3       6.1096 (1.0)        6.8278 (1.0)        6.4093 (1.0)      0.1696 (1.06)       6.3731 (1.0)       0.2401 (1.08)         23;0  156.0233 (1.0)          90           1
-test_benchmark_query4       9.3689 (1.53)      10.4396 (1.53)       9.6997 (1.51)     0.2084 (1.30)       9.6588 (1.52)      0.2558 (1.15)         19;1  103.0964 (0.66)         74           1
-test_benchmark_query5      10.2483 (1.68)      11.2588 (1.65)      10.6250 (1.66)     0.2182 (1.36)      10.5898 (1.66)      0.2786 (1.26)         19;3   94.1174 (0.60)         76           1
-test_benchmark_query6      26.6145 (4.36)      28.1419 (4.12)      27.2591 (4.25)     0.4155 (2.60)      27.2507 (4.28)      0.4789 (2.16)         13;0   36.6850 (0.24)         35           1
-test_benchmark_query7      10.7853 (1.77)      11.8455 (1.73)      11.1504 (1.74)     0.2320 (1.45)      11.0924 (1.74)      0.2733 (1.23)         22;4   89.6825 (0.57)         72           1
-test_benchmark_query8       6.1882 (1.01)       6.9730 (1.02)       6.5042 (1.01)     0.1599 (1.0)        6.5107 (1.02)      0.2216 (1.0)          45;1  153.7461 (0.99)        142           1
-test_benchmark_query9      84.6867 (13.86)     88.3991 (12.95)     86.1115 (13.44)    1.1537 (7.21)      85.8398 (13.47)     1.2994 (5.86)          4;0   11.6129 (0.07)         11           1
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------- benchmark: 9 tests --------------------------------------------------------------------------------------
+Name (time in ms)              Min                 Max                Mean             StdDev              Median                IQR            Outliers       OPS            Rounds  Iterations
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+test_benchmark_query1     131.9140 (24.15)    161.9295 (25.97)    145.7476 (25.98)    10.7732 (102.35)   145.4369 (26.02)    10.6604 (103.23)        2;0    6.8612 (0.04)          5           1
+test_benchmark_query2     204.4252 (37.43)    260.7197 (41.81)    228.8301 (40.79)    27.8654 (264.74)   215.6950 (38.58)    52.3880 (507.29)        2;0    4.3701 (0.02)          5           1
+test_benchmark_query3       5.6705 (1.04)       6.5975 (1.06)       5.9783 (1.07)      0.1484 (1.41)       5.9653 (1.07)      0.1721 (1.67)         30;1  167.2705 (0.94)         99           1
+test_benchmark_query4       8.3214 (1.52)       8.9987 (1.44)       8.6199 (1.54)      0.1452 (1.38)       8.6060 (1.54)      0.2139 (2.07)         30;0  116.0104 (0.65)         88           1
+test_benchmark_query5       9.5784 (1.75)      10.4193 (1.67)       9.8395 (1.75)      0.1247 (1.18)       9.8161 (1.76)      0.1460 (1.41)         18;3  101.6307 (0.57)         77           1
+test_benchmark_query6      25.2552 (4.62)      28.9555 (4.64)      25.9429 (4.62)      0.7389 (7.02)      25.7499 (4.61)      0.5821 (5.64)          4;3   38.5462 (0.22)         36           1
+test_benchmark_query7       9.7063 (1.78)      13.0538 (2.09)      10.2294 (1.82)      0.6877 (6.53)       9.9751 (1.78)      0.3350 (3.24)          9;9   97.7577 (0.55)         82           1
+test_benchmark_query8       5.4614 (1.0)        6.2363 (1.0)        5.6104 (1.0)       0.1053 (1.0)        5.5903 (1.0)       0.1033 (1.0)          22;5  178.2413 (1.0)         143           1
+test_benchmark_query9      77.7965 (14.24)     97.8622 (15.69)     87.8314 (15.66)     7.7831 (73.95)     88.6432 (15.86)    12.3961 (120.04)        4;0   11.3854 (0.06)         10           1
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Legend:
   Outliers: 1 Standard Deviation from Mean; 1.5 IQR (InterQuartile Range) from 1st Quartile and 3rd Quartile.
   OPS: Operations Per Second, computed as 1 / Mean
-=============================== 9 passed in 10.00s ===============================
+============================== 9 passed in 10.29s ==============================
 ```
