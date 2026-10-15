@@ -2,14 +2,14 @@
 
 This repo was originally a benchmark for Kuzu described in this [blog post](https://thedataquarry.com/posts/embedded-db-2/). Since October 2025, Kuzu has been archived and is no longer maintained. Kuzu is now succeeded by a fork, [Ladybug](https://github.com/LadybugDB/ladybug), maintained by @adsharma.
 
-The benchmarks below are updated to compare multi-hop retrieval performance across newer systems like Ladybug and [lance-graph](https://github.com/lance-format/lance-graph),
-an open source graph engine built in Rust on top of the Lance format.
+The benchmarks below are updated to compare multi-hop retrieval performance across newer systems like Ladybug, [lance-graph](https://github.com/lance-format/lance-graph),
+an open source graph engine built in Rust on top of the Lance format, and [DuckPGQ](https://duckpgq.org/), a community extension that adds SQL/PGQ graph pattern matching to [DuckDB](https://duckdb.org/).
 
 It does the following:
 
 * Generate an artificial social network dataset, including persons, interests and locations
   * You can scale up the size of the artificial dataset using the scripts provided and test query performance on larger graphs
-* Ingest the dataset into two graph databases: Kuzu and Neo4j (community edition)
+* Ingest the dataset into several graph systems: Neo4j (community edition), Kuzu, Ladybug, lance-graph and DuckDB + DuckPGQ
 * Run a set of queries that compare the query performance on a suite of queries that involve multi-hop traversals or top-k results with filters and aggregations
 
 ## Setup
@@ -82,9 +82,9 @@ The generated dataset produces a rich and well-connected graph, a subgraph of wh
 
 ## Run the queries
 
-Some sample queries are run in each DB to verify that the data is ingested correctly, and that the results are consistent with one another.
+Some sample queries are run in each DB to verify that the data is ingested correctly, and that the results are consistent with one another. The queries are written in Cypher for Neo4j, Kuzu, Ladybug and lance-graph, and in SQL/PGQ for DuckPGQ.
 
-The following questions are asked of both graphs:
+The following questions are asked of each system:
 
 * **Query 1**: Who are the top 3 most-followed persons?
 * **Query 2**: In which city does the most-followed person live?
@@ -98,17 +98,29 @@ The following questions are asked of both graphs:
 
 ## High-level results
 
-| Query | neo4j-2025.12.1 (ms) | kuzu-0.11.3 (ms) | ladybug-0.15.3 (ms) | lance-graph-0.5.4 (ms) |
-| --- | --- | --- | --- | --- |
-| q1 | 1552.0ms | 138.0ms (11.2x) | 152.7ms (10.2x) | 21.5ms (72.0x) |
-| q2 | 395.0ms | 227.9ms (1.7x) | 235.7ms (1.7x) | 44.4ms (8.9x) |
-| q3 | 39.1ms | 6.4ms (6.1x) | 7.1ms (5.5x) | 7.0ms (5.6x) |
-| q4 | 38.3ms | 9.7ms (3.9x) | 10.5ms (3.6x) | 4.9ms (7.8x) |
-| q5 | 7.7ms | 10.6ms (0.7x) | 12.0ms (0.6x) | 4.8ms (1.6x) |
-| q6 | 21.2ms | 27.3ms (0.8x) | 31.4ms (0.7x) | 5.4ms (3.9x) |
-| q7 | 117.4ms | 11.2ms (10.5x) | 12.4ms (9.5x) | 6.7ms (17.6x) |
-| q8 | 2831.2ms | 6.5ms (435.3x) | 7.3ms (385.8x) | 126.2ms (22.4x) |
-| q9 | 2986.7ms | 86.1ms (34.7x) | 95.2ms (31.4x) | 111.7ms (26.7x) |
+All numbers below are the mean latency over multiple `pytest-benchmark` rounds, with the speedup relative to Neo4j shown in parentheses. They were run on the following machine:
+
+| Component | Details |
+| --- | --- |
+| Machine | MacBook Pro (Mac17,2) |
+| Chip | Apple M5, 10-core CPU (4 performance + 6 efficiency cores) |
+| Memory | 24 GB |
+| OS | macOS 26.6.2 |
+| Python | 3.13.14 (via `uv`) |
+| Neo4j | 2026.09.0 community edition, in Docker 29.8.1 (2 GB page cache, 2–4 GB heap) |
+| Embedded systems | Kuzu 0.11.3, Ladybug 0.21.2, lance-graph 0.5.4, DuckDB 1.5.6 + DuckPGQ (`61f5d082`) |
+
+| Query | neo4j-2026.09.0 (ms) | kuzu-0.11.3 (ms) | ladybug-0.21.2 (ms) | lance-graph-0.5.4 (ms) | duckpgq-1.5.6 (ms) |
+| --- | --- | --- | --- | --- | --- |
+| q1 | 1919.1ms | 145.7ms (13.2x) | 48.8ms (39.3x) | 28.3ms (67.9x) | 11.9ms (161.6x) |
+| q2 | 496.1ms | 228.8ms (2.2x) | 71.1ms (7.0x) | 64.8ms (7.7x) | 9.4ms (52.8x) |
+| q3 | 40.2ms | 6.0ms (6.7x) | 7.0ms (5.7x) | 7.9ms (5.1x) | 4.8ms (8.3x) |
+| q4 | 45.8ms | 8.6ms (5.3x) | 10.0ms (4.6x) | 4.9ms (9.3x) | 2.6ms (17.6x) |
+| q5 | 8.2ms | 9.8ms (0.8x) | 3.0ms (2.7x) | 5.2ms (1.6x) | 2.0ms (4.0x) |
+| q6 | 19.8ms | 25.9ms (0.8x) | 10.8ms (1.8x) | 6.3ms (3.2x) | 2.8ms (7.0x) |
+| q7 | 106.5ms | 10.2ms (10.4x) | 4.5ms (23.7x) | 6.1ms (17.5x) | 2.6ms (40.5x) |
+| q8 | 3407.5ms | 5.6ms (607.4x) | 11.5ms (296.3x) | 172.1ms (19.8x) | 270.6ms (12.6x) |
+| q9 | 4903.0ms | 87.8ms (55.8x) | 59.5ms (82.5x) | 122.2ms (40.1x) | 264.6ms (18.5x) |
 
 ![](./results/benchmark_plot.png)
 

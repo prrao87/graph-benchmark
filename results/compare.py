@@ -93,6 +93,7 @@ def plot_results(
         "lance-graph": "#7f3fbf",
         "neo4j": "#1f77b4",
         "kuzu": "#ff7f0e",
+        "duckpgq": "#2ca02c",
     }
     x = np.arange(len(queries))
     bar_width = 0.8 / max(len(systems), 1)
@@ -133,6 +134,9 @@ def main() -> None:
             files.insert(0, files.pop(idx))
             neo4j_system = path.stem
             break
+
+    # Show DuckPGQ last, after the Cypher-based systems
+    files.sort(key=lambda path: "duckpgq" in path.stem)
 
     systems = [path.stem for path in files]
     system_results = {path.stem: parse_benchmark_file(path) for path in files}

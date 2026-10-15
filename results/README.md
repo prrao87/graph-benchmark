@@ -28,7 +28,8 @@ These results reflect several layers of system behavior, not just “the query p
 - The query planner and optimizer influence performance through join ordering, predicate pushdown, projection pushdown, and limit/top-k optimizations.
 - The execution model matters during runtime. Neo4j commonly uses a row-at-a-time iterator approach (often described as a Volcano-style model), while Kuzu/Ladybug and `lance-graph` execute over columnar data structures, which enables vectorized processing, better cache locality, and efficient partial aggregation.
 - The storage and access paths also matter. Neo4j’s property graph storage favors pointer-based traversals, whereas Kuzu/Ladybug store properties in columnar form and execute traversal patterns using join-style operators, and `lance-graph` operates on Arrow/Lance columnar datasets.
-- Deployment overhead can be visible on shorter queries. Neo4j runs as a server accessed over Bolt, while Kuzu/Ladybug and `lance-graph` are embedded/in-process for this benchmark, which reduces per-query overhead.
+- Deployment overhead can be visible on shorter queries. Neo4j runs as a server accessed over Bolt, while Kuzu/Ladybug, `lance-graph` and DuckDB/DuckPGQ are embedded/in-process for this benchmark, which reduces per-query overhead.
+- DuckPGQ is a parser/binder extension on top of DuckDB: the `GRAPH_TABLE (... MATCH ...)` clause is rewritten into joins between the vertex and edge tables, after which DuckDB's regular optimizer and vectorized, parallel execution engine take over. Its performance on these queries is therefore essentially that of DuckDB executing the equivalent relational join/aggregate plan.
 
 ## Query-by-query intuition
 
@@ -43,6 +44,8 @@ These results reflect several layers of system behavior, not just “the query p
 
 Kuzu/Ladybug excel on `q8`/`q9` because their join-style execution and factorization can avoid fully materializing the intermediate “path explosion.” Conceptually, `q8` can be computed as a sum over `b` of `inDegree(b) * outDegree(b)`, and `q9` becomes a sum of products with filtered degrees, which is much closer to linear in the edge set than in the number of output paths. See the Kuzu research paper for details: https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf.
 
+DuckPGQ shows the same pattern as `lance-graph` on `q8`/`q9`: it is very fast on the join/aggregate/top-k queries (`q1`–`q7`), where it benefits from DuckDB's optimizer and vectorized execution, but on the path-counting queries the rewritten plan is a self-join of `FOLLOWS` that enumerates all ~58M length-2 paths before counting them, so its runtime is proportional to the number of paths rather than the number of edges.
+
 `lance-graph` (which relies on a DataFusion query plan) still performs well on `q8`/`q9` because the engine is vectorized, columnar, and parallel, and it can stream through large joins and aggregates efficiently when the data is already in Arrow/Lance form. However, unless the optimizer applies a rewrite equivalent to the degree-product formulation, the engine still does work proportional to the number of join matches, which helps explain why it is substantially faster than Neo4j while remaining slower than Kuzu/Ladybug on these path-counting queries.
 
 ## Inspecting query plans
@@ -52,4 +55,5 @@ If you want to dig deeper to analyze query performance, most systems provide a w
 - Neo4j supports `EXPLAIN` (plan without execution) and `PROFILE` (plan plus runtime counters). You can prepend `EXPLAIN` or `PROFILE` to any Cypher query and inspect the operator tree and row counts.
 - Kuzu supports `EXPLAIN` for Cypher queries. You can run `EXPLAIN MATCH ... RETURN ...;` and inspect the returned plan text.
 - Ladybug uses the same Cypher dialect as Kuzu for these benchmarks, and the same `EXPLAIN` approach is typically applicable for inspecting its plan output.
+- DuckPGQ queries are regular DuckDB statements, so `EXPLAIN` and `EXPLAIN ANALYZE` work as usual and show the join tree that the `GRAPH_TABLE` clause was rewritten into.
 - `lance-graph` can produce the query graph plan and the underlying DataFusion logical and physical plans. The `lance_graph` Python API exposes this via `CypherQuery(...).with_config(cfg).explain(datasets)`, which returns the plan as a string for the provided in-memory datasets.
