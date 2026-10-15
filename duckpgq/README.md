@@ -3,7 +3,7 @@
 This section describes how to build and query a graph of the social network data in [DuckDB](https://duckdb.org/) using the [DuckPGQ](https://duckpgq.org/) community extension. DuckPGQ adds SQL/PGQ (the graph query extension of the SQL:2023 standard) to DuckDB, so the graph is declared as a *property graph* over regular DuckDB tables and queried with `GRAPH_TABLE (... MATCH ...)` clauses embedded in SQL.
 
 > [!NOTE]
-> All timing numbers shown below are on an M5 Pro Macbook Pro with 48 GB of RAM, using DuckDB 1.5.6 and the DuckPGQ community extension (`61f5d082`).
+> All timing numbers shown below are on an M5 MacBook Pro (10-core CPU: 4 performance + 6 efficiency cores) with 24 GB of RAM, running macOS 26.6.2, using DuckDB 1.5.6 and the DuckPGQ community extension (`61f5d082`).
 
 ## Setup
 
@@ -51,8 +51,8 @@ The numbers shown below are for when we ingest 100K person nodes, ~10K location 
 ```bash
 # Graph has 100K nodes and ~2.4M edges
 $ uv run build_graph.py
-Nodes loaded in 0.0380s
-Edges loaded in 0.0261s
+Nodes loaded in 0.0588s
+Edges loaded in 0.0362s
 Created property graph 'social_network'
 Successfully loaded nodes and edges into DuckDB
 ```
@@ -74,7 +74,6 @@ A few notes on the translation:
 
 ### Results
 ```
-
 Query 1:
  
         SELECT personID, name, count(*) AS numFollowers
@@ -220,10 +219,10 @@ shape: (5, 3)
 │ i64        ┆ str         ┆ str            │
 ╞════════════╪═════════════╪════════════════╡
 │ 77         ┆ Birmingham  ┆ United Kingdom │
-│ 67         ┆ Charlotte   ┆ United States  │
 │ 67         ┆ Kansas City ┆ United States  │
-│ 65         ┆ Portland    ┆ United States  │
+│ 67         ┆ Charlotte   ┆ United States  │
 │ 65         ┆ Montreal    ┆ Canada         │
+│ 65         ┆ Portland    ┆ United States  │
 └────────────┴─────────────┴────────────────┘
 
 Query 7:
@@ -291,7 +290,7 @@ shape: (1, 1)
 │ 45362926 │
 └──────────┘
         
-Queries completed in 0.4373s
+Queries completed in 0.8162s
 ```
 
 ## Query performance
@@ -299,9 +298,9 @@ Queries completed in 0.4373s
 ```sh
 $ uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-iterations=5 --benchmark-disable-gc --benchmark-sort=fullname
 ============================= test session starts ==============================
-platform darwin -- Python 3.13.15, pytest-9.0.2, pluggy-1.6.0
+platform darwin -- Python 3.13.14, pytest-9.0.2, pluggy-1.6.0
 benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=True min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=5)
-rootdir: /Users/dwolde/git/graph-benchmark
+rootdir: /Users/prrao/code/graph-benchmark
 configfile: pyproject.toml
 plugins: anyio-4.12.1, benchmark-5.2.3, asyncio-1.3.0, Faker-40.1.2
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
@@ -313,19 +312,19 @@ benchmark_query.py .........                                             [100%]
 ------------------------------------------------------------------------------------- benchmark: 9 tests -------------------------------------------------------------------------------------
 Name (time in ms)              Min                 Max                Mean            StdDev              Median               IQR            Outliers       OPS            Rounds  Iterations
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-test_benchmark_query1       8.4900 (4.38)       9.5504 (3.07)       8.7872 (4.23)     0.3471 (5.12)       8.6702 (4.24)     0.1613 (2.31)          2;2  113.8015 (0.24)         12           1
-test_benchmark_query2       5.1435 (2.65)      14.2600 (4.58)       5.5352 (2.66)     0.8976 (13.24)      5.3945 (2.64)     0.2012 (2.88)          4;9  180.6604 (0.38)        169           1
-test_benchmark_query3       3.7844 (1.95)      10.6868 (3.43)       4.1087 (1.98)     0.5173 (7.63)       4.0424 (1.97)     0.1803 (2.59)          7;8  243.3850 (0.51)        195           1
-test_benchmark_query4       2.4524 (1.26)       3.1136 (1.0)        2.6342 (1.27)     0.0855 (1.26)       2.6298 (1.28)     0.0980 (1.41)         80;9  379.6156 (0.79)        347           1
-test_benchmark_query5       1.9388 (1.0)        5.2637 (1.69)       2.0794 (1.0)      0.2015 (2.97)       2.0471 (1.0)      0.0938 (1.35)        16;25  480.8996 (1.0)         382           1
-test_benchmark_query6       2.6896 (1.39)       3.3700 (1.08)       2.8458 (1.37)     0.0678 (1.0)        2.8419 (1.39)     0.0697 (1.0)         74;10  351.3978 (0.73)        323           1
-test_benchmark_query7       2.5558 (1.32)       3.1488 (1.01)       2.7080 (1.30)     0.0759 (1.12)       2.6984 (1.32)     0.0747 (1.07)        76;17  369.2701 (0.77)        339           1
-test_benchmark_query8     165.9533 (85.59)    166.8996 (53.60)    166.4807 (80.06)    0.3350 (4.94)     166.4379 (81.30)    0.4123 (5.91)          2;0    6.0067 (0.01)          6           1
-test_benchmark_query9     157.6740 (81.32)    159.8213 (51.33)    158.5235 (76.23)    0.7168 (10.57)    158.4049 (77.38)    0.8899 (12.76)         2;0    6.3082 (0.01)          7           1
+test_benchmark_query1      11.1345 (5.87)      12.9919 (5.58)      11.8725 (5.83)     0.6663 (10.38)     11.5443 (5.71)     1.1104 (15.57)         4;0   84.2281 (0.17)          9           1
+test_benchmark_query2       7.5370 (3.97)      12.6433 (5.43)       9.4009 (4.62)     0.9102 (14.18)      9.3305 (4.61)     1.2286 (17.22)        31;3  106.3732 (0.22)        106           1
+test_benchmark_query3       3.8286 (2.02)       7.9720 (3.43)       4.8400 (2.38)     0.8294 (12.92)      4.7018 (2.33)     1.3182 (18.48)        65;1  206.6113 (0.42)        203           1
+test_benchmark_query4       2.4026 (1.27)       3.0578 (1.31)       2.6083 (1.28)     0.0962 (1.50)       2.5859 (1.28)     0.1148 (1.61)        89;10  383.3857 (0.78)        352           1
+test_benchmark_query5       1.8974 (1.0)        2.3268 (1.0)        2.0350 (1.0)      0.0642 (1.0)        2.0223 (1.0)      0.0713 (1.0)        114;19  491.3984 (1.0)         422           1
+test_benchmark_query6       2.6601 (1.40)       4.0558 (1.74)       2.8201 (1.39)     0.1240 (1.93)       2.7885 (1.38)     0.0998 (1.40)        47;22  354.5922 (0.72)        340           1
+test_benchmark_query7       2.4891 (1.31)       3.0663 (1.32)       2.6314 (1.29)     0.0955 (1.49)       2.6045 (1.29)     0.1007 (1.41)        78;25  380.0313 (0.77)        366           1
+test_benchmark_query8     268.1435 (141.32)   273.1684 (117.40)   270.6218 (132.98)   2.0776 (32.37)    270.2830 (133.65)   3.5029 (49.11)         2;0    3.6952 (0.01)          5           1
+test_benchmark_query9     259.2665 (136.64)   267.6922 (115.05)   264.6424 (130.04)   3.4147 (53.20)    265.7354 (131.40)   4.8074 (67.39)         1;0    3.7787 (0.01)          5           1
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Legend:
   Outliers: 1 Standard Deviation from Mean; 1.5 IQR (InterQuartile Range) from 1st Quartile and 3rd Quartile.
   OPS: Operations Per Second, computed as 1 / Mean
-============================== 9 passed in 9.54s ===============================
+============================== 9 passed in 10.96s ==============================
 ```
