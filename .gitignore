@@ -142,3 +142,4 @@ data/output/edges/*.parquet
 lance_graph/graph_lance/
 duckpgq/social_network.duckdb
 duckpgq/social_network.duckdb.wal
+lance_csr/graph_lance/
