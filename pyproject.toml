@@ -9,6 +9,7 @@ dependencies = [
     "faker>=40.1.2",
     "kuzu>=0.11.3",
     "ladybug>=0.21.2",
+    "lance-csr==0.5.0",
     "lance-graph>=0.5.4",
     "matplotlib>=3.10.8",
     "neo4j>=6.1.0",
