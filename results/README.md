@@ -48,7 +48,12 @@ DuckPGQ shows the same pattern as `lance-graph` on `q8`/`q9`: it is very fast on
 
 `lance-graph` (which relies on a DataFusion query plan) still performs well on `q8`/`q9` because the engine is vectorized, columnar, and parallel, and it can stream through large joins and aggregates efficiently when the data is already in Arrow/Lance form. However, unless the optimizer applies a rewrite equivalent to the degree-product formulation, the engine still does work proportional to the number of join matches, which helps explain why it is substantially faster than Neo4j while remaining slower than Kuzu/Ladybug on these path-counting queries.
 
-`lance-csr` is a fork of `lance-graph` and runs the same Cypher queries over the same in-memory Arrow tables. It is roughly 1.5–2x faster than `lance-graph` on `q1`–`q7`. Since 0.5.1 its planner applies the degree-product rewrite to two-hop `count(*)` patterns when each `WHERE` condition reads only one hop's variables: it groups each hop down to one row per middle node `b` and sums `inDegree(b) * outDegree(b)` instead of building every path. That makes it about 5x faster than `lance-graph` on `q8`/`q9` and the fastest system on `q9`, while Kuzu/Ladybug stay ahead on `q8`. This is not a like-for-like storage comparison: the lance-csr (and `lance-graph`) benchmark reads every Lance dataset into in-memory Arrow tables before the timed queries run, so no query touches disk, whereas Kuzu/Ladybug keep their CSR adjacency lists on disk as part of their storage format and read them through a buffer manager. Its experimental CSR adjacency index (`use_csr=True`) only covers single-hop patterns and made `q1`, `q2`, `q8` and `q9` slower here, so the numbers above use the engine's default settings.
+`lance-csr` is a fork of `lance-graph` that runs the same Cypher queries:
+
+- `q1`–`q7`: roughly 1.5–2x faster than `lance-graph`.
+- `q8`/`q9`: since 0.5.1, it sums `inDegree(b) * outDegree(b)` per middle node `b` instead of building every path. About 5x faster than `lance-graph`, fastest on `q9`, behind Kuzu/Ladybug on `q8`.
+- Storage: both Lance engines query in-memory Arrow tables, loaded before the timed queries. Kuzu/Ladybug read their CSR adjacency lists from disk.
+- `use_csr=True`: covers single-hop patterns only, and made `q1`, `q2`, `q8` and `q9` slower, so the numbers above use the defaults.
 
 ## Inspecting query plans
 
