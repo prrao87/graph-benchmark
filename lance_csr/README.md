@@ -15,7 +15,7 @@ across queries. The Cypher queries are identical to the ones in `lance_graph/`.
 uv add lance-csr
 ```
 
-lance-csr 0.5.0 needs `pylance` 13.x to write Lance datasets.
+lance-csr 0.5.1 needs `pylance` 13.x to write Lance datasets.
 
 ## Build graph
 
@@ -42,7 +42,7 @@ uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-ite
 ```
 
 The engine runs with its default settings. The experimental in-memory CSR adjacency
-(`CypherEngine(..., use_csr=True)`) was slower on this benchmark: about 89 ms vs 30 ms
-on q2, 166 ms vs 114 ms on q8 and 128 ms vs 91 ms on q9. That run is kept in
-`results/archive/lance-csr-0.5.0-use-csr.txt`. Reading the Lance datasets lazily
+(`CypherEngine(..., use_csr=True)`) was slower on this benchmark: about 52 ms vs 14 ms
+on q1, 172 ms vs 33 ms on q2, 30 ms vs 21 ms on q8 and 24 ms vs 20 ms on q9. That run
+is kept in `results/archive/lance-csr-0.5.1-use-csr.txt`. Reading the Lance datasets lazily
 instead of loading them into memory was also slower, by roughly 5–15%.
