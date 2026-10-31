@@ -126,6 +126,9 @@ All numbers below are the mean latency over multiple `pytest-benchmark` rounds, 
 
 > 🔥 The n-hop path-finding queries (8 and 9) in Kuzu/Ladybug benefit from hybrid joins (WCOJ + binary) and factorization, which are query processing innovations described in the [Kùzu research paper](https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf).
 
+> [!NOTE]
+> lance-csr and lance-graph run over in-memory Arrow tables, loaded from the Lance datasets before the timed queries, while Kuzu/Ladybug keep their CSR adjacency lists on disk as part of their storage format. Their numbers, especially on `q8`/`q9`, compare an in-memory engine against on-disk storage.
+
 ## Explanation of results
 
 See the [results](./results/) directory for an explanation of query results, and the script used to generate the plot.
