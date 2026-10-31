@@ -2,7 +2,7 @@
 
 Builds one `CypherEngine` over in-memory Arrow tables and reuses it across
 benchmark queries. The experimental CSR index (`use_csr=True`) is left off: it
-was slower on q2/q8/q9 here (see results/archive/lance-csr-0.5.0-use-csr.txt).
+was slower on q1/q2/q8/q9 here (see results/archive/lance-csr-0.5.1-use-csr.txt).
 """
 
 import time
