@@ -8,7 +8,7 @@ dependencies = [
     "duckdb>=1.5.6",
     "faker>=40.1.2",
     "kuzu>=0.11.3",
-    "ladybug>=0.21.2",
+    "ladybug>=0.22.1",
     "lance-csr==0.5.1",
     "lance-graph>=0.5.4",
     "matplotlib>=3.10.8",
