@@ -108,19 +108,19 @@ All numbers below are the mean latency over multiple `pytest-benchmark` rounds, 
 | OS | macOS 26.6.2 |
 | Python | 3.13.14 (via `uv`) |
 | Neo4j | 2026.09.0 community edition, in Docker 29.8.1 (2 GB page cache, 2–4 GB heap) |
-| Embedded systems | Kuzu 0.11.3, Ladybug 0.21.2, lance-graph 0.5.4, lance-csr 0.5.1, DuckDB 1.5.6 + DuckPGQ (`61f5d082`) |
+| Embedded systems | Kuzu 0.11.3, Ladybug 0.22.1, lance-graph 0.5.4, lance-csr 0.5.1, DuckDB 1.5.6 + DuckPGQ (`61f5d082`) |
 
-| Query | neo4j-2026.09.0 (ms) | kuzu-0.11.3 (ms) | ladybug-0.21.2 (ms) | lance-csr-0.5.1 (ms) | lance-graph-0.5.4 (ms) | duckpgq-1.5.6 (ms) |
+| Query | neo4j-2026.09.0 (ms) | kuzu-0.11.3 (ms) | ladybug-0.22.1 (ms) | lance-csr-0.5.1 (ms) | lance-graph-0.5.4 (ms) | duckpgq-1.5.6 (ms) |
 | --- | --- | --- | --- | --- | --- | --- |
-| q1 | 1919.1ms | 145.7ms (13.2x) | 48.8ms (39.3x) | 13.6ms (141.3x) | 22.0ms (87.2x) | 11.9ms (161.6x) |
-| q2 | 496.1ms | 228.8ms (2.2x) | 71.1ms (7.0x) | 32.5ms (15.2x) | 44.9ms (11.0x) | 9.4ms (52.8x) |
-| q3 | 40.2ms | 6.0ms (6.7x) | 7.0ms (5.7x) | 2.8ms (14.5x) | 5.9ms (6.8x) | 4.8ms (8.3x) |
-| q4 | 45.8ms | 8.6ms (5.3x) | 10.0ms (4.6x) | 2.3ms (20.2x) | 4.2ms (11.0x) | 2.6ms (17.6x) |
-| q5 | 8.2ms | 9.8ms (0.8x) | 3.0ms (2.7x) | 1.9ms (4.3x) | 4.1ms (2.0x) | 2.0ms (4.0x) |
-| q6 | 19.8ms | 25.9ms (0.8x) | 10.8ms (1.8x) | 2.4ms (8.3x) | 4.6ms (4.3x) | 2.8ms (7.0x) |
-| q7 | 106.5ms | 10.2ms (10.4x) | 4.5ms (23.7x) | 3.4ms (30.9x) | 5.5ms (19.3x) | 2.6ms (40.5x) |
-| q8 | 3407.5ms | 5.6ms (607.4x) | 11.5ms (296.3x) | 21.2ms (160.7x) | 115.3ms (29.6x) | 270.6ms (12.6x) |
-| q9 | 4903.0ms | 87.8ms (55.8x) | 59.5ms (82.5x) | 20.2ms (243.0x) | 93.6ms (52.4x) | 264.6ms (18.5x) |
+| q1 | 1919.1ms | 145.7ms (13.2x) | 45.0ms (42.7x) | 13.6ms (141.3x) | 22.0ms (87.2x) | 11.9ms (161.6x) |
+| q2 | 496.1ms | 228.8ms (2.2x) | 65.7ms (7.6x) | 32.5ms (15.2x) | 44.9ms (11.0x) | 9.4ms (52.8x) |
+| q3 | 40.2ms | 6.0ms (6.7x) | 5.1ms (7.8x) | 2.8ms (14.5x) | 5.9ms (6.8x) | 4.8ms (8.3x) |
+| q4 | 45.8ms | 8.6ms (5.3x) | 7.0ms (6.5x) | 2.3ms (20.2x) | 4.2ms (11.0x) | 2.6ms (17.6x) |
+| q5 | 8.2ms | 9.8ms (0.8x) | 1.5ms (5.4x) | 1.9ms (4.3x) | 4.1ms (2.0x) | 2.0ms (4.0x) |
+| q6 | 19.8ms | 25.9ms (0.8x) | 159.6ms (0.1x) | 2.4ms (8.3x) | 4.6ms (4.3x) | 2.8ms (7.0x) |
+| q7 | 106.5ms | 10.2ms (10.4x) | 2.9ms (36.4x) | 3.4ms (30.9x) | 5.5ms (19.3x) | 2.6ms (40.5x) |
+| q8 | 3407.5ms | 5.6ms (607.4x) | 9.5ms (359.3x) | 21.2ms (160.7x) | 115.3ms (29.6x) | 270.6ms (12.6x) |
+| q9 | 4903.0ms | 87.8ms (55.8x) | 44.9ms (109.2x) | 20.2ms (243.0x) | 93.6ms (52.4x) | 264.6ms (18.5x) |
 
 ![](./results/benchmark_plot.png)
 
@@ -129,6 +129,7 @@ All numbers below are the mean latency over multiple `pytest-benchmark` rounds, 
 > [!NOTE]
 > - lance-csr and lance-graph: in-memory Arrow tables, loaded before the timed queries
 > - Kuzu/Ladybug: CSR adjacency lists on disk, as part of the storage format
+> - Ladybug `q6`: ~15x slower since 0.22.0 because of a planner change; see [results](./results/README.md#ladybug-022-regression-on-q6)
 
 ## Explanation of results
 

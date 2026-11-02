@@ -55,6 +55,23 @@ DuckPGQ shows the same pattern as `lance-graph` on `q8`/`q9`: it is very fast on
 - Storage: both Lance engines query in-memory Arrow tables, loaded before the timed queries. Kuzu/Ladybug read their CSR adjacency lists from disk.
 - `use_csr=True`: covers single-hop patterns only, and made `q1`, `q2`, `q8` and `q9` slower, so the numbers above use the defaults.
 
+## Ladybug 0.22 regression on `q6`
+
+Ladybug 0.22.x is faster than 0.21.2 on every query except `q6`, which went from ~11 ms to ~160 ms. On the same M5 machine, with the graph rebuilt by each version:
+
+| Ladybug | `q6` mean |
+| --- | --- |
+| 0.21.2 | ~12 ms |
+| 0.22.0 | ~180 ms |
+| 0.22.1 | ~160–190 ms |
+
+So the regression came in with 0.22.0 and is not fixed in 0.22.1. `EXPLAIN` shows a planner change on the second `MATCH (p)-[:LivesIn]->(c:City)`:
+
+- 0.21.2 scans `City`, hash-joins it against the `LivesIn` edges, and uses a semi-mask so only the persons that passed the interest/gender filter are expanded.
+- 0.22.x flattens the `LivesIn` edges and runs a `QUERY_PRIMARY_KEY_LOOKUP` on `City` once per tuple. `PROFILE` shows the lookup handling all 100K `LivesIn` rows and taking ~95% of the operator time.
+
+The other queries don't use this plan shape and get faster in 0.22.x (for example, `q5` goes from 3.0 to 1.5 ms and `q9` from 59 to 45 ms).
+
 ## Inspecting query plans
 
 If you want to dig deeper to analyze query performance, most systems provide a way to inspect the plan that the engine chose. This can be useful for validating join order, predicate pushdown, and whether limits and aggregates are applied early.
