@@ -129,6 +129,7 @@ All numbers below are the mean latency over multiple `pytest-benchmark` rounds, 
 > [!NOTE]
 > - lance-csr and lance-graph: in-memory Arrow tables, loaded before the timed queries
 > - Kuzu/Ladybug: CSR adjacency lists on disk, as part of the storage format
+> - Ladybug `q6`: ~15x slower since 0.22.0 because of a planner change; see [results](./results/README.md#ladybug-022-regression-on-q6)
 
 ## Explanation of results
 
