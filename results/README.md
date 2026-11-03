@@ -50,10 +50,10 @@ DuckPGQ shows the same pattern as `lance-graph` on `q8`/`q9`: it is very fast on
 
 `lance-csr` is a fork of `lance-graph` that runs the same Cypher queries:
 
-- `q1`–`q7`: roughly 1.5–2x faster than `lance-graph`.
-- `q8`/`q9`: since 0.5.1, it sums `inDegree(b) * outDegree(b)` per middle node `b` instead of building every path. About 5x faster than `lance-graph`, fastest on `q9`, behind Kuzu/Ladybug on `q8`.
+- `q1`–`q7`: roughly 1.5–3.5x faster than `lance-graph`.
+- `q8`/`q9`: since 0.5.1, it sums `inDegree(b) * outDegree(b)` per middle node `b` instead of building every path. About 7–8x faster than `lance-graph`, fastest on `q9`, behind Kuzu/Ladybug on `q8`.
 - Storage: both Lance engines query in-memory Arrow tables, loaded before the timed queries. Kuzu/Ladybug read their CSR adjacency lists from disk.
-- `use_csr=True`: covers single-hop patterns only, and made `q1`, `q2`, `q8` and `q9` slower, so the numbers above use the defaults.
+- `use_csr=True`: the numbers above use the experimental in-memory CSR index, which is off by default. In 0.6.1 it is faster than the defaults on `q1`, `q2`, `q8` and `q9` (about 1.4–2.4x) and within noise elsewhere; the default-settings run is in `archive/lance-csr-0.6.1-default.txt`.
 
 ## Inspecting query plans
 

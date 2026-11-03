@@ -1,8 +1,9 @@
 """Benchmark query helpers for lance-csr.
 
 Builds one `CypherEngine` over in-memory Arrow tables and reuses it across
-benchmark queries. The experimental CSR index (`use_csr=True`) is left off: it
-was slower on q1/q2/q8/q9 here (see results/archive/lance-csr-0.5.1-use-csr.txt).
+benchmark queries. The experimental CSR index (`use_csr=True`, off by default)
+is turned on: in 0.6.1 it is faster on q1/q2/q8/q9 (see
+results/archive/lance-csr-0.6.1-default.txt for the default-settings run).
 """
 
 import time
@@ -57,7 +58,7 @@ def to_polars(result: pa.Table) -> pl.DataFrame:
 
 
 def build_engine(root: Path = GRAPH_ROOT) -> CypherEngine:
-    return CypherEngine(build_config(), load_datasets(root))
+    return CypherEngine(build_config(), load_datasets(root), use_csr=True)
 
 
 def execute_query(
