@@ -1,8 +1,9 @@
 """Benchmark query helpers for lance-csr.
 
 Builds one `CypherEngine` over in-memory Arrow tables and reuses it across
-benchmark queries. The experimental CSR index (`use_csr=True`) is left off: it
-was slower on q1/q2/q8/q9 here (see results/archive/lance-csr-0.5.1-use-csr.txt).
+benchmark queries. The experimental CSR index (`use_csr=True`) is left off to
+match the engine defaults, though it is faster on q1/q2/q8/q9 in 0.6.1 (see
+results/archive/lance-csr-0.6.1-use-csr.txt).
 """
 
 import time
