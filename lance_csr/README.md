@@ -41,9 +41,10 @@ in query 6 can come back in either order.
 uv run pytest benchmark_query.py --benchmark-min-rounds=5 --benchmark-warmup-iterations=5 --benchmark-disable-gc --benchmark-sort=fullname
 ```
 
-The engine runs with its default settings. The experimental in-memory CSR adjacency
-(`CypherEngine(..., use_csr=True)`) was slower than the defaults up to 0.5.1, but is
-faster in 0.6.1: about 7.6 ms vs 12.5 ms on q1, 12.6 ms vs 30.0 ms on q2, 13.6 ms vs
-20.1 ms on q8 and 12.8 ms vs 17.4 ms on q9, and within noise on the rest. That run is
-kept in `results/archive/lance-csr-0.6.1-use-csr.txt`. Reading the Lance datasets lazily
+The engine runs with the experimental in-memory CSR adjacency
+(`CypherEngine(..., use_csr=True)`), which is off by default. It was slower than the
+defaults up to 0.5.1, but is faster in 0.6.1: about 7.6 ms vs 12.5 ms on q1, 12.6 ms
+vs 30.0 ms on q2, 13.6 ms vs 20.1 ms on q8 and 12.8 ms vs 17.4 ms on q9, and within
+noise on the rest. The index is built once with the engine, before the timed queries.
+The default-settings run is kept in `results/archive/lance-csr-0.6.1-default.txt`. Reading the Lance datasets lazily
 instead of loading them into memory was slower on 0.5.x, by roughly 5–15%.
