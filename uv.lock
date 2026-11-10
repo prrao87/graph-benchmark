@@ -639,7 +639,7 @@ requires-dist = [
     { name = "faker", specifier = ">=40.1.2" },
     { name = "kuzu", specifier = ">=0.11.3" },
     { name = "ladybug", specifier = ">=0.21.2" },
-    { name = "lance-csr", specifier = "==0.6.1" },
+    { name = "lance-csr", specifier = "==0.9.0" },
     { name = "lance-graph", specifier = ">=0.5.4" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "neo4j", specifier = ">=6.1.0" },
@@ -920,16 +920,18 @@ wheels = [
 
 [[package]]
 name = "lance-csr"
-version = "0.6.1"
+version = "0.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyarrow" },
     { name = "pylance" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/27/2c/eb45becf2d4588a25e33d29312671de18ef72d272be2eb071e1bcced63f7/lance_csr-0.6.1.tar.gz", hash = "sha256:3cb3fb4be5e4b2674f7312e345a2bf557e32067a0a2da3c54f449c37efeb98db", size = 433864, upload-time = "2026-11-03T03:06:35.577Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/13/6e/4f2c4a4f54da76283f2634c75a9dde8f43cb93d3b3c262a34c4fbb138658/lance_csr-0.9.0.tar.gz", hash = "sha256:81fdda471a5eb8472c8b562eec2d10a56d28584fbf0a4dfcd0719650fd6bc495", size = 454476, upload-time = "2026-11-07T20:37:01.343Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/ae/6e4ff5f7193325714e8077d273321d1113083c7e1c269200cff8fb97e646/lance_csr-0.6.1-cp312-abi3-macosx_11_0_arm64.whl", hash = "sha256:a4d5645836b47140edb4520335ef240fe0746032ad640f3088b550cd90c40915", size = 58637432, upload-time = "2026-11-03T03:06:25.061Z" },
-    { url = "https://files.pythonhosted.org/packages/3e/c9/0f7f40623b1988fa4e5dfcb5c3b16891ee64d5534f9252236c2b5a50e46f/lance_csr-0.6.1-cp312-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:c14f592a89c69fc6e260daf1aa7bc7ce36edfb785618ed039086185e92a0415d", size = 66016242, upload-time = "2026-11-03T03:06:29.129Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/6e/46166070c16ac4d83c1ed96d747fafa0464ef487be78d0dd777a51d5358c/lance_csr-0.9.0-cp312-abi3-macosx_11_0_arm64.whl", hash = "sha256:3b1cc5dfde8f39d20da273b2c7fb08631e4d7868f494288e459226720e5d7299", size = 58726860, upload-time = "2026-11-07T20:36:46.695Z" },
+    { url = "https://files.pythonhosted.org/packages/6c/d9/73e6fa771ebf85e383c840fbf0a14360937956d55d1bac9a14bdd7766ada/lance_csr-0.9.0-cp312-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:5b23fb3d2d4a18b8d1be5e2b4f8f8a7f83150d5b5b00d2269579f19e66f4ad3b", size = 62542592, upload-time = "2026-11-07T20:36:51.038Z" },
+    { url = "https://files.pythonhosted.org/packages/42/5c/c34ccd156fc60c7bd676d88dcc7bf53f5a3cdf44863247bb5bc3b02e216e/lance_csr-0.9.0-cp312-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:5eefd9d7c1e2b641eded1f73bd8064a7385687ece7acd7374d87d7a0b9c85764", size = 66108240, upload-time = "2026-11-07T20:36:55.1Z" },
+    { url = "https://files.pythonhosted.org/packages/32/81/88124bff4762b682b5714ea24709b4b09e00602434e59f693074997ae4f2/lance_csr-0.9.0-cp312-abi3-win_amd64.whl", hash = "sha256:3ac8f28e90ae46b65de25b4a209e193bab7d941fb1ef97009e2b23cd1b8a6d09", size = 70464125, upload-time = "2026-11-07T20:36:59.064Z" },
 ]
 
 [[package]]
