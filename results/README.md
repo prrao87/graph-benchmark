@@ -44,14 +44,16 @@ These results reflect several layers of system behavior, not just “the query p
 
 Kuzu/Ladybug excel on `q8`/`q9` because their join-style execution and factorization can avoid fully materializing the intermediate “path explosion.” Conceptually, `q8` can be computed as a sum over `b` of `inDegree(b) * outDegree(b)`, and `q9` becomes a sum of products with filtered degrees, which is much closer to linear in the edge set than in the number of output paths. See the Kuzu research paper for details: https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf.
 
+Ladybug 0.22.3 is faster than 0.21.2 on most queries, but about 15x slower on `q6` (153 ms vs 10 ms). Its plan now joins each `LivesIn` edge to `City` with a per-row primary-key lookup (`QUERY_PRIMARY_KEY_LOOKUP`), where 0.21.2 used a hash join. The 0.21.2 results are in `archive/ladybug-0.21.2.txt`.
+
 DuckPGQ shows the same pattern as `lance-graph` on `q8`/`q9`: it is very fast on the join/aggregate/top-k queries (`q1`–`q7`), where it benefits from DuckDB's optimizer and vectorized execution, but on the path-counting queries the rewritten plan is a self-join of `FOLLOWS` that enumerates all ~58M length-2 paths before counting them, so its runtime is proportional to the number of paths rather than the number of edges.
 
 `lance-graph` (which relies on a DataFusion query plan) still performs well on `q8`/`q9` because the engine is vectorized, columnar, and parallel, and it can stream through large joins and aggregates efficiently when the data is already in Arrow/Lance form. However, unless the optimizer applies a rewrite equivalent to the degree-product formulation, the engine still does work proportional to the number of join matches, which helps explain why it is substantially faster than Neo4j while remaining slower than Kuzu/Ladybug on these path-counting queries.
 
 `lance-csr` is a fork of `lance-graph` that runs the same Cypher queries:
 
-- `q1`–`q7`: roughly 1.4–3.5x faster than `lance-graph`.
-- `q8`/`q9`: since 0.5.1, it sums `inDegree(b) * outDegree(b)` per middle node `b` instead of building every path. About 7–8x faster than `lance-graph`, fastest on `q9`, behind Kuzu/Ladybug on `q8`.
+- `q1`–`q7`: roughly 1.6–3.3x faster than `lance-graph`.
+- `q8`/`q9`: since 0.5.1, it sums `inDegree(b) * outDegree(b)` per middle node `b` instead of building every path. About 7.5–8.5x faster than `lance-graph`, fastest on `q9`, behind Kuzu/Ladybug on `q8`.
 - Storage: both Lance engines query in-memory Arrow tables, loaded before the timed queries. Kuzu/Ladybug read their CSR adjacency lists from disk.
 - `use_csr=True`: the numbers above use the experimental in-memory CSR index, which is off by default in lance-csr.
 
