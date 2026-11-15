@@ -47,8 +47,5 @@ The engine runs with the experimental in-memory CSR adjacency
 (`CypherEngine(..., use_csr=True)`), which is off by default in lance-csr. The index
 is built once with the engine, before the timed queries.
 
-0.12.0 runs at the same speed as 0.11.0 on this benchmark: back-to-back runs of both
-versions on the same machine were within noise on every query.
-
 Reading the Lance datasets lazily
 instead of loading them into memory was slower on 0.5.x, by roughly 5–15%.
