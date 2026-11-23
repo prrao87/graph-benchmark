@@ -41,7 +41,7 @@ def parse_benchmark_file(path: Path) -> dict[str, float]:
         if len(columns) < 4:
             continue
         name = columns[0]
-        mean_value = float(columns[3].split()[0])
+        mean_value = float(columns[3].split()[0].replace(",", ""))
         means_ms[name] = mean_value * unit_scale
     if unit_scale is None:
         raise ValueError(f"Missing header with time unit in {path.name}")
@@ -95,6 +95,7 @@ def plot_results(
         "neo4j": "#1f77b4",
         "kuzu": "#ff7f0e",
         "duckpgq": "#2ca02c",
+        "relate": "#17becf",
     }
     x = np.arange(len(queries))
     bar_width = 0.8 / max(len(systems), 1)
