@@ -57,6 +57,8 @@ DuckPGQ shows the same pattern as `lance-graph` on `q8`/`q9`: it is very fast on
 - Storage: both Lance engines query in-memory Arrow tables, loaded before the timed queries. Kuzu/Ladybug read their CSR adjacency lists from disk.
 - `use_csr=True`: the numbers above use the experimental in-memory CSR index, which is off by default in lance-csr.
 
+`relate` (Neo4j's embedded Rust engine) runs the same Cypher as Neo4j, in-process, and returns the same results. It is faster than the Neo4j server on `q1`, `q6` and `q7`, but slower on the rest: up to 6x on `q3` and 2x on the path-counting `q8`.
+
 ## Inspecting query plans
 
 If you want to dig deeper to analyze query performance, most systems provide a way to inspect the plan that the engine chose. This can be useful for validating join order, predicate pushdown, and whether limits and aggregates are applied early.
