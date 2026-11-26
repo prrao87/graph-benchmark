@@ -108,19 +108,19 @@ All numbers below are the mean latency over multiple `pytest-benchmark` rounds, 
 | OS | macOS 26.6.2 |
 | Python | 3.13.14 (via `uv`) |
 | Neo4j | 2026.09.0 community edition, in Docker 29.8.1 (2 GB page cache, 2–4 GB heap) |
-| Embedded systems | Kuzu 0.11.3, Ladybug 0.22.3, lance-graph 0.5.4, lance-csr 0.14.0, Relate 1.2.0, DuckDB 1.5.6 + DuckPGQ (`61f5d082`) |
+| Embedded systems | Kuzu 0.11.3, Ladybug 0.22.3, lance-graph 0.5.4, lance-csr 0.15.0, Relate 1.2.0, DuckDB 1.5.6 + DuckPGQ (`61f5d082`) |
 
-| Query | neo4j-2026.09.0 (ms) | kuzu-0.11.3 (ms) | ladybug-0.22.3 (ms) | lance-csr-0.14.0 (ms) | lance-graph-0.5.4 (ms) | relate-1.2.0 (ms) | duckpgq-1.5.6 (ms) |
+| Query | neo4j-2026.09.0 (ms) | kuzu-0.11.3 (ms) | ladybug-0.22.3 (ms) | lance-csr-0.15.0 (ms) | lance-graph-0.5.4 (ms) | relate-1.2.0 (ms) | duckpgq-1.5.6 (ms) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| q1 | 1919.1ms | 145.7ms (13.2x) | 45.3ms (42.3x) | 8.0ms (241.0x) | 22.0ms (87.2x) | 888.9ms (2.2x) | 11.9ms (161.6x) |
-| q2 | 496.1ms | 228.8ms (2.2x) | 64.1ms (7.7x) | 14.0ms (35.5x) | 44.9ms (11.0x) | 1289.7ms (0.4x) | 9.4ms (52.8x) |
-| q3 | 40.2ms | 6.0ms (6.7x) | 5.3ms (7.6x) | 2.7ms (14.8x) | 5.9ms (6.8x) | 233.4ms (0.2x) | 4.8ms (8.3x) |
-| q4 | 45.8ms | 8.6ms (5.3x) | 7.2ms (6.4x) | 1.8ms (25.6x) | 4.2ms (11.0x) | 111.8ms (0.4x) | 2.6ms (17.6x) |
-| q5 | 8.2ms | 9.8ms (0.8x) | 1.6ms (5.3x) | 1.7ms (4.8x) | 4.1ms (2.0x) | 11.5ms (0.7x) | 2.0ms (4.0x) |
-| q6 | 19.8ms | 25.9ms (0.8x) | 152.8ms (0.1x) | 2.2ms (8.9x) | 4.6ms (4.3x) | 11.5ms (1.7x) | 2.8ms (7.0x) |
-| q7 | 106.5ms | 10.2ms (10.4x) | 3.0ms (35.4x) | 3.8ms (28.2x) | 5.5ms (19.3x) | 96.4ms (1.1x) | 2.6ms (40.5x) |
-| q8 | 3407.5ms | 5.6ms (607.4x) | 9.6ms (354.1x) | 14.2ms (240.5x) | 115.3ms (29.6x) | 6979.0ms (0.5x) | 270.6ms (12.6x) |
-| q9 | 4903.0ms | 87.8ms (55.8x) | 42.5ms (115.3x) | 13.0ms (378.3x) | 93.6ms (52.4x) | 5862.0ms (0.8x) | 264.6ms (18.5x) |
+| q1 | 1919.1ms | 145.7ms (13.2x) | 45.3ms (42.3x) | 7.5ms (254.6x) | 22.0ms (87.2x) | 888.9ms (2.2x) | 11.9ms (161.6x) |
+| q2 | 496.1ms | 228.8ms (2.2x) | 64.1ms (7.7x) | 12.2ms (40.8x) | 44.9ms (11.0x) | 1289.7ms (0.4x) | 9.4ms (52.8x) |
+| q3 | 40.2ms | 6.0ms (6.7x) | 5.3ms (7.6x) | 2.7ms (14.7x) | 5.9ms (6.8x) | 233.4ms (0.2x) | 4.8ms (8.3x) |
+| q4 | 45.8ms | 8.6ms (5.3x) | 7.2ms (6.4x) | 1.6ms (28.5x) | 4.2ms (11.0x) | 111.8ms (0.4x) | 2.6ms (17.6x) |
+| q5 | 8.2ms | 9.8ms (0.8x) | 1.6ms (5.3x) | 1.6ms (5.0x) | 4.1ms (2.0x) | 11.5ms (0.7x) | 2.0ms (4.0x) |
+| q6 | 19.8ms | 25.9ms (0.8x) | 152.8ms (0.1x) | 1.9ms (10.4x) | 4.6ms (4.3x) | 11.5ms (1.7x) | 2.8ms (7.0x) |
+| q7 | 106.5ms | 10.2ms (10.4x) | 3.0ms (35.4x) | 3.7ms (28.8x) | 5.5ms (19.3x) | 96.4ms (1.1x) | 2.6ms (40.5x) |
+| q8 | 3407.5ms | 5.6ms (607.4x) | 9.6ms (354.1x) | 13.3ms (256.2x) | 115.3ms (29.6x) | 6979.0ms (0.5x) | 270.6ms (12.6x) |
+| q9 | 4903.0ms | 87.8ms (55.8x) | 42.5ms (115.3x) | 12.6ms (390.5x) | 93.6ms (52.4x) | 5862.0ms (0.8x) | 264.6ms (18.5x) |
 
 ![](./results/benchmark_plot.png)
 
